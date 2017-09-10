@@ -44,6 +44,7 @@ import java.util.Set;
  *  meaning that state was reached via a different set of rule invocations.</p>
  */
 public class DFAState {
+
 	public int stateNumber = -1;
 
 
@@ -54,6 +55,29 @@ public class DFAState {
 	 */
 
 	public DFAState[] edges;
+
+	// Represents edges of from this DFA state to other DFA states.
+	// It is better to encapsulate these in a class
+	UIntMap<DFAState> edgeMap;
+
+	public void addEdge(int symbol, DFAState state) {
+		if (edgeMap == null) {
+			edgeMap = new UIntMap<>(16);
+		}
+		edgeMap.put(symbol > 0 ? symbol : 0, state);
+	}
+
+    public DFAState getState(int symbol) {
+		return symbol > 0 ? edgeMap.get(symbol) : edgeMap.get(0);
+	}
+
+	public boolean hasAnyEdge() {
+		return edgeMap != null;
+	}
+
+	public int getEdgeCount() {
+		return edgeMap != null ? edgeMap.size() : 0;
+	}
 
 	public boolean isAcceptState = false;
 

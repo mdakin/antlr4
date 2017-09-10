@@ -245,7 +245,7 @@ public class LexerATNSimulator extends ATNSimulator {
 	 * already cached
 	 */
 
-	protected DFAState getExistingTargetState(DFAState s, int t) {
+	protected DFAState getExistingTargetState_(DFAState s, int t) {
 		if (s.edges == null || t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
 			return null;
 		}
@@ -257,6 +257,10 @@ public class LexerATNSimulator extends ATNSimulator {
 		}
 
 		return target;
+	}
+
+	protected DFAState getExistingTargetState(DFAState s, int t) {
+		return s.hasAnyEdge() ? s.getState(t) : null;
 	}
 
 	/**
@@ -643,7 +647,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		return to;
 	}
 
-	protected void addDFAEdge(DFAState p, int t, DFAState q) {
+	protected void addDFAEdge_(DFAState p, int t, DFAState q) {
 		if (t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
 			// Only track edges within the DFA bounds
 			return;
@@ -661,6 +665,14 @@ public class LexerATNSimulator extends ATNSimulator {
 			p.edges[t - MIN_DFA_EDGE] = q; // connect
 		}
 	}
+
+	protected void addDFAEdge(DFAState p, int t, DFAState q) {
+		if ( debug ) {
+			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
+		}
+		p.addEdge(t, q);
+	}
+
 
 	/** Add a new DFA state if there isn't one with this set of
 		configurations already. This method also detects the first
@@ -703,7 +715,6 @@ public class LexerATNSimulator extends ATNSimulator {
 			return newState;
 		}
 	}
-
 
 	public final DFA getDFA(int mode) {
 		return decisionToDFA[mode];
