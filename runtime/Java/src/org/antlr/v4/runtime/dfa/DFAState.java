@@ -53,18 +53,19 @@ public class DFAState {
 	/** {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
 	 *  {@link Token#EOF} maps to {@code edges[0]}.
 	 */
-
 	public DFAState[] edges;
 
+
 	// Represents edges of from this DFA state to other DFA states.
-	// It is better to encapsulate these in a class
-	UIntMap<DFAState> edgeMap;
+	SimpleIntMap<DFAState> edgeMap;
 
 	public void addEdge(int symbol, DFAState state) {
 		if (edgeMap == null) {
-			edgeMap = new UIntMap<>(16);
+			edgeMap = new SimpleIntMap<>(4);
 		}
-		edgeMap.put(symbol > 0 ? symbol : 0, state);
+		synchronized(edgeMap) {
+			edgeMap.put(symbol > 0 ? symbol : 0, state);
+		}
 	}
 
     public DFAState getState(int symbol) {
