@@ -5,17 +5,16 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * A map like class that has integer keys and T values. Relatively fast and
- * compact compared to default HashMap. Implementation is open address
- * linear probing with some heuristics on expansion limits.
+ * A simple hashmap with integer keys and T values.
+ * Implementation is open address linear probing with some heuristics on
+ * expansion limits. For tiny maps uses linear
  *
  * Constraints:
  * - Only support key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
  * - Size can be max ~Integer.MAX_VALUE * LOAD_FACTOR
  * - Does not support remove.
  * - Does not implement Iterable.
- *
- * This class is not thread safe.
+ * - This class is not thread safe.
  *
  * Note: If contains mostly positive or mostly negative numbers it is very fast,
  * but if there are lots of abs(key) collisions, performance may degenerate
@@ -25,9 +24,8 @@ public class SimpleIntMap<T> {
     private static final int DEFAULT_INITIAL_SIZE = 4;
     private static final double LOAD_FACTOR = 0.8;
     private static final double GROWTH_FACTOR = 1.8;
+    // Very small maps are traversed linearly and doubles size on expand.
     private static final int TINY_SIZE_TRIGGER = 12;
-    private static final int LARGE_SIZE_TRIGGER = 1 << 20;
-    private static final double LARGE_SIZE_GROWTH_FACTOR = 1.5;
     // This value is VM dependent. Slightly smaller than the one in ArrayList.
     private static final int MAX_SIZE = Integer.MAX_VALUE - (1 << 10);
     // Special value to mark empty cells.
@@ -40,7 +38,7 @@ public class SimpleIntMap<T> {
 
     // Number of keys in the map. Size of the map.
     private int keyCount;
-    // When size reaches threshold, backing arrays are expanded.
+    // When size reaches a threshold, backing arrays are expanded.
     private int threshold;
 
     public SimpleIntMap() {
@@ -61,12 +59,12 @@ public class SimpleIntMap<T> {
         return keyCount;
     }
 
-    private int firstProbe(int hashCode) {
+    private int initialProbe(int hashCode) {
         return hashCode >= 0 ? hashCode % keys.length : -hashCode % keys.length;
     }
 
-    private int nextProbe(int previousIndex, int probeCount) {
-        return (previousIndex + probeCount) % keys.length;
+    private int probeNext(int index) {
+        return index  % keys.length;
     }
 
     private void checkKey(int key) {
@@ -85,14 +83,12 @@ public class SimpleIntMap<T> {
     /** Returns the value associated with given key. If key does not exist, returns null. */
     public T get(int key) {
         checkKey(key);
-        // A safe-ish optimization, for tiny maps, just go through all keys.
+        // For tiny maps, just go through all keys.
         if (keys.length < TINY_SIZE_TRIGGER) {
             return getTiny(key);
         }
         // Else apply linear probing.
-        int probeCount = 0;
-        int initialProbe = firstProbe(key);
-        int slot = initialProbe;
+        int slot = initialProbe(key);
         while (true) {
             final int t = keys[slot];
             if (t == EMPTY) {
@@ -101,11 +97,10 @@ public class SimpleIntMap<T> {
             if (t == key) {
                 return values[slot];
             }
-            slot = nextProbe(initialProbe, ++probeCount);
+            slot = probeNext(slot + 1);
         }
     }
 
-    /** Puts `key` with `value`. if `key` already exists, it overwrites its value with `value` */
     public void put(int key, T value) {
         checkKey(key);
         if (keyCount == threshold) {
@@ -126,8 +121,9 @@ public class SimpleIntMap<T> {
         int[] keyArray = new int[keyCount];
         int c = 0;
         for (int key : keys) {
-            if (key > MIN_KEY_VALUE)
-                keyArray[c++] = key;
+            if (key > MIN_KEY_VALUE) {
+				keyArray[c++] = key;
+			}
         }
         return keyArray;
     }
@@ -135,8 +131,7 @@ public class SimpleIntMap<T> {
     public List<T> getValues() {
         List<T> result = new ArrayList<>();
         for (int i = 0; i < keys.length; i++) {
-            int key = keys[i];
-            if (key >= 0) {
+            if (keys[i] >= 0) {
                 result.add(values[i]);
             }
         }
@@ -144,9 +139,7 @@ public class SimpleIntMap<T> {
     }
 
     private int locate(int key) {
-        int probeCount = 0;
-        int initialProbe = firstProbe(key);
-        int slot = initialProbe;
+        int slot = initialProbe(key);
         while (true) {
             final int k = keys[slot];
             // If slot is empty, return its location
@@ -156,7 +149,7 @@ public class SimpleIntMap<T> {
             if (k == key) {
                 return slot;
             }
-            slot = nextProbe(initialProbe, ++probeCount);
+            slot = probeNext(slot+1);
         }
     }
 
@@ -169,10 +162,7 @@ public class SimpleIntMap<T> {
         if (keys.length < TINY_SIZE_TRIGGER) {
             return keys.length * 2;
         }
-        // Else apply a factor depending on size
-        long size = keys.length < LARGE_SIZE_TRIGGER
-            ? (long)(keys.length * GROWTH_FACTOR)
-            : (long)(keys.length * LARGE_SIZE_GROWTH_FACTOR);
+        long size = (long)(keys.length * GROWTH_FACTOR);
         // If new size is larger than MAX_SIZE, clamp it.
         if (size > MAX_SIZE) {
             size = MAX_SIZE;
