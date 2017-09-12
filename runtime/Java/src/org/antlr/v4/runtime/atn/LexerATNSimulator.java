@@ -245,8 +245,22 @@ public class LexerATNSimulator extends ATNSimulator {
 	 * already cached
 	 */
 
+	protected DFAState getExistingTargetState_(DFAState s, int t) {
+		if (s.edges == null || t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
+			return null;
+		}
+
+		DFAState target = s.edges[t - MIN_DFA_EDGE];
+		if (debug && target != null) {
+			System.out.println("reuse state "+s.stateNumber+
+					" edge to "+target.stateNumber);
+		}
+
+		return target;
+	}
+
 	protected DFAState getExistingTargetState(DFAState s, int t) {
-		return s.hasAnyEdge() ? s.getState(t) : null;
+		return s.getState(t);
 	}
 
 	/**
@@ -631,6 +645,25 @@ public class LexerATNSimulator extends ATNSimulator {
 
 		addDFAEdge(from, t, to);
 		return to;
+	}
+
+	protected void addDFAEdge_(DFAState p, int t, DFAState q) {
+		if (t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
+			// Only track edges within the DFA bounds
+			return;
+		}
+
+		if ( debug ) {
+			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
+		}
+
+		synchronized (p) {
+			if ( p.edges==null ) {
+				//  make room for tokens 1..n and -1 masquerading as index 0
+				p.edges = new DFAState[MAX_DFA_EDGE-MIN_DFA_EDGE+1];
+			}
+			p.edges[t - MIN_DFA_EDGE] = q; // connect
+		}
 	}
 
 	protected void addDFAEdge(DFAState p, int t, DFAState q) {
