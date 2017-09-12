@@ -7,14 +7,14 @@ import java.util.List;
 /**
  * A simple hashmap with integer keys and T values.
  * Implementation is open address linear probing with some heuristics on
- * expansion limits. For tiny maps uses linear
+ * expansion limits. For tiny maps uses linear search.
  *
  * Constraints:
  * - Only support key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
  * - Size can be max ~Integer.MAX_VALUE * LOAD_FACTOR
  * - Does not support remove.
  * - Does not implement Iterable.
- * - This class is not thread safe.
+ * - Class is not thread safe.
  *
  * Note: If contains mostly positive or mostly negative numbers it is very fast,
  * but if there are lots of abs(key) collisions, performance may degenerate
@@ -22,10 +22,10 @@ import java.util.List;
  */
 public class SimpleIntMap<T> {
     private static final int DEFAULT_INITIAL_SIZE = 4;
-    private static final double LOAD_FACTOR = 0.8;
+    private static final double LOAD_FACTOR = 0.80;
     private static final double GROWTH_FACTOR = 1.8;
     // Very small maps are traversed linearly and doubles size on expand.
-    private static final int TINY_SIZE_TRIGGER = 12;
+    private static final int TINY_SIZE_TRIGGER = 10;
     // This value is VM dependent. Slightly smaller than the one in ArrayList.
     private static final int MAX_SIZE = Integer.MAX_VALUE - (1 << 10);
     // Special value to mark empty cells.
@@ -67,11 +67,27 @@ public class SimpleIntMap<T> {
         return index  % keys.length;
     }
 
-    private void checkKey(int key) {
-        if (key <= MIN_KEY_VALUE) {
-            throw new IllegalArgumentException("Illegal key: " + key);
-        }
-    }
+	private void checkKey(int key) {
+		if (key <= MIN_KEY_VALUE) {
+			throw new IllegalArgumentException("Illegal key: " + key);
+		}
+	}
+
+	public void put(int key, T value) {
+		checkKey(key);
+		if (keyCount == threshold) {
+			expand();
+		}
+		int loc = locate(key);
+		if (loc >= 0) {
+			values[loc] = value;
+		} else {
+			loc = -loc - 1;
+			keys[loc] = key;
+			values[loc] = value;
+			keyCount++;
+		}
+	}
 
     private T getTiny(int key) {
         for (int i=0; i < keys.length; i++) {
@@ -80,9 +96,13 @@ public class SimpleIntMap<T> {
         return null;
     }
 
-    /** Returns the value associated with given key. If key does not exist, returns null. */
+    /**
+	 * Returns the value associated with given key.
+	 * If key does not exist, returns null.
+	 *
+	 * For key = Integer.MIN_INT behavior is undefined.
+	 */
     public T get(int key) {
-        checkKey(key);
         // For tiny maps, just go through all keys.
         if (keys.length < TINY_SIZE_TRIGGER) {
             return getTiny(key);
@@ -98,22 +118,6 @@ public class SimpleIntMap<T> {
                 return values[slot];
             }
             slot = probeNext(slot + 1);
-        }
-    }
-
-    public void put(int key, T value) {
-        checkKey(key);
-        if (keyCount == threshold) {
-            expand();
-        }
-        int loc = locate(key);
-        if (loc >= 0) {
-            values[loc] = value;
-        } else {
-            loc = -loc - 1;
-            keys[loc] = key;
-            values[loc] = value;
-            keyCount++;
         }
     }
 

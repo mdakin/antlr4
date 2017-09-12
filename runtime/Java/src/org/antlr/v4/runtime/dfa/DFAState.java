@@ -57,12 +57,9 @@ public class DFAState {
 
 
 	// Represents edges of from this DFA state to other DFA states.
-	SimpleIntMap<DFAState> edgeMap;
+	SimpleIntMap<DFAState> edgeMap = new SimpleIntMap<>();
 
 	public void addEdge(int symbol, DFAState state) {
-		if (edgeMap == null) {
-			edgeMap = new SimpleIntMap<>(4);
-		}
 		synchronized(edgeMap) {
 			edgeMap.put(symbol > 0 ? symbol : 0, state);
 		}
