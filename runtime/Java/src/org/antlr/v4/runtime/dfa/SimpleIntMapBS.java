@@ -7,6 +7,7 @@ import java.util.List;
 /**
  * A simple hashmap with integer keys and T values.
  * Implementation is open address linear probing.
+ * For tiny maps uses linear search.
  * <p>
  * Constraints:
  * - Only support key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
@@ -15,10 +16,12 @@ import java.util.List;
  * - Does not implement Iterable.
  * - Class is not thread safe.
  */
-public class SimpleIntMap<T> {
-	private static final int DEFAULT_INITIAL_SIZE = 10;
+public class SimpleIntMapBS<T> {
+	private static final int DEFAULT_INITIAL_SIZE = 4;
 	private static final double LOAD_FACTOR = 0.7;
 	// Very small maps are traversed linearly and expand() does not double its size.
+	private static final int TINY_SIZE = 4;
+	// This value is VM dependent. Slightly smaller than the one in ArrayList.
 	private static final int MAX_SIZE = 1 << 30;
 	// Special value to mark empty cells.
 	private static final int EMPTY = Integer.MIN_VALUE;
@@ -36,6 +39,11 @@ public class SimpleIntMap<T> {
 	// integer modulo operation x % size can be replaced with
 	// x & (size - 1) and we keep size - 1 value in this variable.
 	private int modulo;
+	// If the map is too small, we use different algorithms:
+	// - get is a linear search
+	// - put only inserts keys at the beginning of array
+	// - map is expanded slowly
+	private boolean isTiny;
 
 	public class Instrumentation {
 		public long collisions;
@@ -56,7 +64,7 @@ public class SimpleIntMap<T> {
 
 	public Instrumentation ins = new Instrumentation();
 
-	public SimpleIntMap() {
+	public SimpleIntMapBS() {
 		this(DEFAULT_INITIAL_SIZE);
 	}
 
@@ -64,18 +72,24 @@ public class SimpleIntMap<T> {
 	 * @param size initial internal array size. It must be a positive number. If value is not a power of two, size will
 	 *             ne the nearest larger power of two.
 	 */
-	public SimpleIntMap(int size) {
+	public SimpleIntMapBS(int size) {
 		size = adjustInitialSize(size) ;
 		keys = new int[size];
 		values = (T[]) new Object[keys.length];
 		Arrays.fill(keys, EMPTY);
 		modulo = keys.length - 1;
-		threshold = (int) (size * LOAD_FACTOR);
+		isTiny = size <= TINY_SIZE;
+		// For tiny maps, threshold is equal to size.
+		threshold = isTiny ?  size : (int) (size * LOAD_FACTOR);
 	}
 
 	private int adjustInitialSize(int size) {
 		if (size < 1) {
 			throw new IllegalArgumentException("Size must > 0: " + size);
+		}
+		// If map size is tiny, use the size as is.
+		if (size <= TINY_SIZE) {
+			return size;
 		}
 		// For bigger maps, adjust to nearest 2^n size.
 		long k = 1;
@@ -108,6 +122,10 @@ public class SimpleIntMap<T> {
 		if (keyCount == threshold) {
 			expand();
 		}
+		if (isTiny) {
+			putTiny(key, value);
+			return;
+		}
 		int loc = locate(key);
 		if (loc >= 0) {
 			values[loc] = value;
@@ -119,6 +137,30 @@ public class SimpleIntMap<T> {
 		}
 	}
 
+	private void putTiny(int key, T value) {
+		for (int i = 0; i < keyCount; i++) {
+			if (keys[i] == key) {
+				values[i] = value;
+				return;
+			}
+		}
+		keys[keyCount] = key;
+		values[keyCount] = value;
+		keyCount++;
+	}
+
+	private T getTiny(int key) {
+		for (int i = 0; i < keyCount; i++) {
+
+			if (keys[i] == key) {
+				ins.updateTinyHits(i);
+				return values[i];
+			}
+			else ins.skips++;
+		}
+		return null;
+	}
+
 	/**
 	 * Returns the value associated with given key.
 	 * If key does not exist, returns null.
@@ -126,17 +168,27 @@ public class SimpleIntMap<T> {
 	 * For key = Integer.MIN_INT behavior is undefined.
 	 */
 	public T get(int key) {
+		// For tiny maps, look keys from [0..keyCount-1].
+		if (isTiny) {
+			ins.totalTinyGet++;
+			return getTiny(key);
+		}
+		ins.totalProbeGet++;
+		// Else apply linear probing.
 		int slot = initialProbe(key);
-		if (key == keys[slot]) return values[slot];
+		int steps = 0;
 		while (true) {
-			slot = probeNext(slot + 1);
 			final int t = keys[slot];
-			if (t == key) {
-				return values[slot];
-			}
 			if (t == EMPTY) {
 				return null;
 			}
+			if (t == key) {
+				ins.updateProbeHits(steps);
+				return values[slot];
+			}
+			steps++;
+			ins.collisions++;
+			slot = probeNext(slot + 1);
 		}
 	}
 
@@ -181,6 +233,11 @@ public class SimpleIntMap<T> {
 	}
 
 	private int newSize() {
+		// If map is tiny, expand slowly.
+		if (isTiny) {
+			return keys.length + 4;
+		}
+		// Otherwise double the size.
 		long size = (long) (keys.length * 2);
 		if (keys.length > MAX_SIZE) {
 			throw new RuntimeException("Map size is too large.");
@@ -190,7 +247,16 @@ public class SimpleIntMap<T> {
 
 	private void expand() {
 		int size = newSize();
-		SimpleIntMap<T> h = new SimpleIntMap<>(size);
+
+		// For smaller size just expand and copy arrays.
+		if (size <= TINY_SIZE) {
+			this.keys = Arrays.copyOf(keys, size);
+			this.values = Arrays.copyOf(values, size);
+			this.threshold = size;
+			return;
+		}
+
+		SimpleIntMapBS<T> h = new SimpleIntMapBS<>(size);
 		for (int i = 0; i < keys.length; i++) {
 			if (keys[i] > MIN_KEY_VALUE) {
 				h.put(keys[i], values[i]);
@@ -200,12 +266,15 @@ public class SimpleIntMap<T> {
 		this.values = h.values;
 		this.threshold = h.threshold;
 		this.modulo = h.modulo;
+		this.isTiny = h.isTiny;
 	}
 
 	public String toDebugString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Size: ").append(keys.length).append(":").append(keyCount);
-
+		if (isTiny) {
+			sb.append(" *Tiny*");
+		}
 		sb.append('\n');
 		sb.append("Collisions: ").append(ins.collisions).append('\n');
 		sb.append("Tiny skips: ").append(ins.skips).append('\n');
