@@ -15,7 +15,9 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.Interval;
 
+import java.util.LinkedHashSet;
 import java.util.Locale;
+import java.util.Set;
 
 /** "dup" of ParserInterpreter */
 public class LexerATNSimulator extends ATNSimulator {
@@ -680,6 +682,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		traversing the DFA, we will know which rule to accept.
 	 */
 
+	private Set<DFAState> allStates = new LinkedHashSet<>();
 	protected DFAState addDFAState(ATNConfigSet configs) {
 		/* the lexer evaluates predicates on-the-fly; by this point configs
 		 * should not contain any configurations with unevaluated predicates.
@@ -707,6 +710,7 @@ public class LexerATNSimulator extends ATNSimulator {
 			if ( existing!=null ) return existing;
 
 			DFAState newState = proposed;
+			allStates.add(newState);
 
 			newState.stateNumber = dfa.states.size();
 			configs.setReadonly(true);
@@ -761,5 +765,14 @@ public class LexerATNSimulator extends ATNSimulator {
 		if ( t==-1 ) return "EOF";
 		//if ( atn.g!=null ) return atn.g.getTokenDisplayName(t);
 		return "'"+(char)t+"'";
+	}
+
+	public String toString() {
+		StringBuilder sb  = new StringBuilder();
+		sb.append("Total DFA states: " + allStates.size());
+		for (DFAState state : allStates) {
+			sb.append(state.edgesToString()).append('\n');
+		}
+		return sb.toString();
 	}
 }

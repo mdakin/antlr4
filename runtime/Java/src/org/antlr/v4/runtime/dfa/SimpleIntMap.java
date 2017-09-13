@@ -7,11 +7,11 @@ import java.util.List;
 /**
  * A simple hashmap with integer keys and T values.
  * Implementation is open address linear probing with some heuristics on
- * expansion limits. For tiny maps uses linear search.
+ * expansion limits. Some parts of the map is optimized for tiny maps.
  *
  * Constraints:
  * - Only support key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
- * - Size can be max ~Integer.MAX_VALUE * LOAD_FACTOR
+ * - Size can be max 1 << 30
  * - Does not support remove.
  * - Does not implement Iterable.
  * - Class is not thread safe.
@@ -21,13 +21,12 @@ import java.util.List;
  * considerably. (e.g. all keys in [-range..range])
  */
 public class SimpleIntMap<T> {
-    private static final int DEFAULT_INITIAL_SIZE = 4;
-    private static final double LOAD_FACTOR = 0.80;
-    private static final double GROWTH_FACTOR = 1.8;
+    private static final int DEFAULT_INITIAL_SIZE = 2;
+    private static final double LOAD_FACTOR = 0.8;
     // Very small maps are traversed linearly and doubles size on expand.
-    private static final int TINY_SIZE_TRIGGER = 10;
+    private static final int TINY_SIZE = 8;
     // This value is VM dependent. Slightly smaller than the one in ArrayList.
-    private static final int MAX_SIZE = Integer.MAX_VALUE - (1 << 10);
+    private static final int MAX_SIZE = 1 << 30;
     // Special value to mark empty cells.
     private static final int EMPTY = Integer.MIN_VALUE;
     private static final int MIN_KEY_VALUE = Integer.MIN_VALUE;
@@ -40,6 +39,7 @@ public class SimpleIntMap<T> {
     private int keyCount;
     // When size reaches a threshold, backing arrays are expanded.
     private int threshold;
+    private int modulo;
 
     public SimpleIntMap() {
         this(DEFAULT_INITIAL_SIZE);
@@ -49,10 +49,12 @@ public class SimpleIntMap<T> {
         if (size < 1) {
             throw new IllegalArgumentException("Size must > 0: " + size);
         }
+        // TODO: make size power of 2
         keys = new int[size];
         values = (T[]) new Object[keys.length];
         Arrays.fill(keys, EMPTY);
-        threshold = (int) (size * LOAD_FACTOR);
+        modulo = keys.length - 1;
+        threshold = size <= TINY_SIZE ? size : (int) (size * LOAD_FACTOR);
     }
 
     public int size() {
@@ -60,11 +62,11 @@ public class SimpleIntMap<T> {
     }
 
     private int initialProbe(int hashCode) {
-        return hashCode >= 0 ? hashCode % keys.length : -hashCode % keys.length;
+        return hashCode >= 0 ? hashCode & modulo : -hashCode & modulo;
     }
 
     private int probeNext(int index) {
-        return index  % keys.length;
+        return index & modulo;
     }
 
 	private void checkKey(int key) {
@@ -104,7 +106,7 @@ public class SimpleIntMap<T> {
 	 */
     public T get(int key) {
         // For tiny maps, just go through all keys.
-        if (keys.length < TINY_SIZE_TRIGGER) {
+        if (keys.length <= TINY_SIZE) {
             return getTiny(key);
         }
         // Else apply linear probing.
@@ -162,22 +164,14 @@ public class SimpleIntMap<T> {
     }
 
     private int newSize() {
-        // If size is tiny, double it
-        if (keys.length < TINY_SIZE_TRIGGER) {
-            return keys.length * 2;
-        }
-        long size = (long)(keys.length * GROWTH_FACTOR);
-        // If new size is larger than MAX_SIZE, clamp it.
-        if (size > MAX_SIZE) {
-            size = MAX_SIZE;
-        }
+        long size = (long)(keys.length * 2);
+		if (keys.length > MAX_SIZE) {
+			throw new RuntimeException("Map size is too large.");
+		}
         return (int) size;
     }
 
     private void expand() {
-        if (keys.length == MAX_SIZE) {
-            throw new RuntimeException("Map size is too large.");
-        }
         SimpleIntMap<T> h = new SimpleIntMap<>(newSize());
         for (int i = 0; i < keys.length; i++) {
             if (keys[i] > MIN_KEY_VALUE) {
@@ -187,5 +181,19 @@ public class SimpleIntMap<T> {
         this.keys = h.keys;
         this.values = h.values;
         this.threshold = h.threshold;
+        this.modulo = h.modulo;
     }
+
+    public String rawKeysString() {
+    	StringBuilder sb = new StringBuilder();
+    	for (int i=0; i<keys.length; i++) {
+    		if (keys[i] == EMPTY) {
+    			sb.append("_, ");
+			} else {
+    			sb.append(keys[i]).append(", ");
+			}
+		}
+		sb.append(" ").append(keys.length).append(":").append(keyCount);
+		return sb.toString();
+	}
 }

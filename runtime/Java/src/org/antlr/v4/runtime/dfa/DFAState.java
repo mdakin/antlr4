@@ -57,7 +57,7 @@ public class DFAState {
 
 
 	// Represents edges of from this DFA state to other DFA states.
-	SimpleIntMap<DFAState> edgeMap = new SimpleIntMap<>();
+	public SimpleIntMap<DFAState> edgeMap = new SimpleIntMap<>();
 
 	public void addEdge(int symbol, DFAState state) {
 		synchronized(edgeMap) {
@@ -196,5 +196,11 @@ public class DFAState {
             }
         }
 		return buf.toString();
+	}
+
+	public String edgesToString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(edgeMap.rawKeysString());
+		return sb.toString();
 	}
 }

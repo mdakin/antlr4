@@ -1,4 +1,6 @@
 import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.atn.LexerATNSimulator;
+import org.antlr.v4.runtime.dfa.DFAState;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -89,8 +91,11 @@ public class TurkishTokenizer {
 			ANTLRInputStream inputStream = new ANTLRFileStream(f.getAbsolutePath());
 			long startTime = System.currentTimeMillis();
 			//getAllTokens(lexerInstance(inputStream));
-			getAllTokens(lexerInstanceAscii(inputStream));
+			TurkishLexerAscii lexer = lexerInstanceAscii(inputStream);
+			getAllTokens(lexer);
 			long elapsedMillis = System.currentTimeMillis() - startTime;
+//			LexerATNSimulator interpreter = lexer.getInterpreter();
+//			System.out.println(interpreter);
 			System.out.println("Total time: " + elapsedMillis + "ms.");
 			System.out.printf("Tokens per second: %.2f\n", tokens * 1000.0 / elapsedMillis);
 		}
