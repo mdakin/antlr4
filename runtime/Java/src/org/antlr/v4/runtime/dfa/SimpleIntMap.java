@@ -16,7 +16,7 @@ import java.util.List;
  * - Class is not thread safe.
  */
 public class SimpleIntMap<T> {
-	private static final int DEFAULT_INITIAL_SIZE = 10;
+	private static final int DEFAULT_INITIAL_SIZE = 8;
 	private static final double LOAD_FACTOR = 0.7;
 	// Very small maps are traversed linearly and expand() does not double its size.
 	private static final int MAX_SIZE = 1 << 30;
@@ -28,33 +28,14 @@ public class SimpleIntMap<T> {
 	private int[] keys;
 	private T[] values;
 
-	// Number of keys in the map. Size of the map.
+	// Number of keys in the map = size of the map.
 	private int keyCount;
 	// When size reaches a threshold, backing arrays are expanded.
 	private int threshold;
-	// Except for the tiny maps, map size is always a power of 2,
-	// integer modulo operation x % size can be replaced with
-	// x & (size - 1) and we keep size - 1 value in this variable.
+	// Map size is always a power of 2. With this property,
+	// integer modulo operation (x % size) can be replaced with
+	// (x & (size - 1)) and we keep (size - 1) value in this variable.
 	private int modulo;
-
-	public class Instrumentation {
-		public long collisions;
-		public long skips;
-		public long totalTinyGet;
-		public long totalProbeGet;
-		public long[] tinyHits = new long[10];
-		public long[] probeHits = new long[10];
-
-		public void updateTinyHits(int i) {
-			tinyHits[Math.min(i, tinyHits.length - 1)]++;
-		}
-
-		public void updateProbeHits(int i) {
-			probeHits[Math.min(i, probeHits.length - 1)]++;
-		}
-	}
-
-	public Instrumentation ins = new Instrumentation();
 
 	public SimpleIntMap() {
 		this(DEFAULT_INITIAL_SIZE);
@@ -201,34 +182,4 @@ public class SimpleIntMap<T> {
 		this.threshold = h.threshold;
 		this.modulo = h.modulo;
 	}
-
-	public String toDebugString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Size: ").append(keys.length).append(":").append(keyCount);
-
-		sb.append('\n');
-		sb.append("Collisions: ").append(ins.collisions).append('\n');
-		sb.append("Tiny skips: ").append(ins.skips).append('\n');
-		sb.append("Total tiny gets : ").append(ins.totalTinyGet).append('\n');
-		sb.append("Total probe gets: ").append(ins.totalProbeGet).append('\n');
-		sb.append("Tiny hit histogram:  ");
-		for (int i = 0; i < ins.tinyHits.length; i++) {
-			sb.append(i + ": " + ins.tinyHits[i]).append(", ");
-		}
-		sb.append('\n');
-		sb.append("Probe hit histogram: ");
-		for (int i = 0; i < ins.probeHits.length; i++) {
-			sb.append(i + ": " + ins.probeHits[i]).append(", ");
-		}
-//		sb.append('\n');
-//		for (int key : keys) {
-//			if (key == EMPTY) {
-//				sb.append("_, ");
-//			} else {
-//				sb.append(key).append(", ");
-//			}
-//		}
-		return sb.toString();
-	}
-
 }
