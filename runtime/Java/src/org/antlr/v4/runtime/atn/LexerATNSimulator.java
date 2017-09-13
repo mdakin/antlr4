@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.LexerNoViableAltException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
+import org.antlr.v4.runtime.dfa.SimpleIntMap.Instrumentation;
 import org.antlr.v4.runtime.misc.Interval;
 
 import java.util.LinkedHashSet;
@@ -767,9 +768,72 @@ public class LexerATNSimulator extends ATNSimulator {
 		return "'"+(char)t+"'";
 	}
 
+	// Simple histogram
+	private static class Histogram {
+		static int[] DEFAULT_HISTOGRAM_BUCKETS =
+				{0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 32, 64, 100, 200, 500, 1000, 10000, Integer.MAX_VALUE};
+		int[] buckets;
+		int[] counts;
+		double[] percents;
+		long total;
+
+		Histogram() {
+			buckets = DEFAULT_HISTOGRAM_BUCKETS.clone();
+			counts = new int[buckets.length];
+			percents = new double[buckets.length];
+		}
+
+		void update(int value) {
+			int i = 0;
+			while (buckets[i] < value) i++;
+			counts[i]++;
+			total++;
+		}
+
+		String print() {
+			int sum = 0;
+			for (int i = 0; i < counts.length; i++){
+				sum += counts[i];
+				percents[i] = 100.0 * sum / total;
+			}
+			StringBuilder sb = new StringBuilder();
+			for (int i = 1; i < buckets.length; i++) {
+				sb.append("(" + buckets[i - 1] + ".." + buckets[i] + "]: ")
+						.append(counts[i])
+						.append(String.format("  %.2f", percents[i])).append('%')
+						.append('\n');
+			}
+			return sb.toString();
+		}
+	}
+
 	public String toString() {
+		Histogram h = new Histogram();
 		StringBuilder sb  = new StringBuilder();
-		sb.append("Total DFA states: " + allStates.size());
+		long totalCollisions = 0;
+		long totalSkips = 0;
+		long totalTinyGets = 0;
+		long totalProbeGets = 0;
+		sb.append("Total DFA states: " + allStates.size()).append('\n');
+		int totalEdges = 0;
+		for (DFAState state: allStates) {
+			Instrumentation ins = state.instrumentation();
+			totalCollisions += ins.collisions;
+			totalSkips += ins.skips;
+			totalTinyGets += ins.totalTinyGet;
+			totalProbeGets += ins.totalProbeGet;
+			int edgeCount = state.getEdgeCount();
+			h.update(edgeCount);
+			totalEdges += state.getEdgeCount();
+		}
+		sb.append("Total DFA edges: " + totalEdges).append("\n\n");
+		sb.append("Total collisions: " + totalCollisions).append('\n');
+		sb.append("Total skips: " + totalSkips).append('\n');
+		sb.append("Total tiny gets: " + totalTinyGets).append('\n');
+		sb.append("Total probe gets: " + totalProbeGets).append('\n');
+		sb.append('\n');
+		sb.append("DFA edge count histogram:\n");
+		sb.append(h.print());
 		for (DFAState state : allStates) {
 			sb.append(state.edgesToString()).append('\n');
 		}

@@ -48,7 +48,7 @@ public class TurkishTokenizer {
 //			tokenCounts[type]++;
 		}
 
-		System.out.println("Total tokens:" + tokens);
+		System.out.println("Total tokens: " + tokens);
 //		for (int i=0; i<tokenCounts.length; i++) {
 //			System.out.println("Token type: " + i + " Count:" + tokenCounts[i]);
 //		}
@@ -81,21 +81,19 @@ public class TurkishTokenizer {
 	}
 
 	public static void main(String[] args) throws IOException {
+		String fileName = "/usr/local/google/home/mdakin/tmp/reduced/www.cnnturk.com.corpus";
+		String fileNameAscii = fileName + "_ascii";
+		File f = new File(fileName);
 
-
-		File f = new File("/home/mdakin/IdeaProjects/antlr4/speed/resources/corpus1_ascii_50M");
-
-
-	//	File f = new File("/home/mdakin/IdeaProjects/antlr4/speed/resources/corpus1_50M");
-		for (int i=0; i<10; i++) {
+		for (int i=0; i<1; i++) {
 			ANTLRInputStream inputStream = new ANTLRFileStream(f.getAbsolutePath());
+			TurkishLexer lexer = lexerInstance(inputStream);
+			// TurkishLexerAscii lexer = lexerInstanceAscii(inputStream);
 			long startTime = System.currentTimeMillis();
-			//getAllTokens(lexerInstance(inputStream));
-			TurkishLexerAscii lexer = lexerInstanceAscii(inputStream);
 			getAllTokens(lexer);
 			long elapsedMillis = System.currentTimeMillis() - startTime;
-//			LexerATNSimulator interpreter = lexer.getInterpreter();
-//			System.out.println(interpreter);
+			LexerATNSimulator interpreter = lexer.getInterpreter();
+			System.out.println(interpreter);
 			System.out.println("Total time: " + elapsedMillis + "ms.");
 			System.out.printf("Tokens per second: %.2f\n", tokens * 1000.0 / elapsedMillis);
 		}
@@ -103,7 +101,7 @@ public class TurkishTokenizer {
 //		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f));
 //		InputStreamReader ir = new InputStreamReader(bis, StandardCharsets.UTF_8);
 //
-//      FileOutputStream fos = new FileOutputStream("/home/mdakin/IdeaProjects/antlr4/speed/resources/corpus1_ascii_50M");
+//    FileOutputStream fos = new FileOutputStream(f + "_ascii");
 //		BufferedOutputStream bos = new BufferedOutputStream(fos);
 //		while (true) {
 //			int c = ir.read();
