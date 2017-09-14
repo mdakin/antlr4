@@ -15,10 +15,10 @@ import java.util.List;
  * - Does not implement Iterable.
  * - Class is not thread safe.
  */
-public class SimpleIntMap<T> {
+public final class SimpleIntMap<T> {
 	private static final int DEFAULT_INITIAL_SIZE = 8;
-	private static final double LOAD_FACTOR = 0.7;
-	// Very small maps are traversed linearly and expand() does not double its size.
+	// specifically selected to fit max 5,10 elements to 8,16 sized maps.
+	private static final double LOAD_FACTOR = 0.65;
 	private static final int MAX_SIZE = 1 << 30;
 	// Special value to mark empty cells.
 	private static final int EMPTY = Integer.MIN_VALUE;
@@ -42,8 +42,8 @@ public class SimpleIntMap<T> {
 	}
 
 	/**
-	 * @param size initial internal array size. It must be a positive number. If value is not a power of two, size will
-	 *             ne the nearest larger power of two.
+	 * @param size initial internal array size. It must be a positive number.
+	 *     If value is not a power of two, size will be the nearest larger power of two.
 	 */
 	public SimpleIntMap(int size) {
 		size = adjustInitialSize(size) ;
@@ -58,7 +58,6 @@ public class SimpleIntMap<T> {
 		if (size < 1) {
 			throw new IllegalArgumentException("Size must > 0: " + size);
 		}
-		// For bigger maps, adjust to nearest 2^n size.
 		long k = 1;
 		while (k < size) {
 			k <<= 1;
@@ -70,8 +69,8 @@ public class SimpleIntMap<T> {
 		return keyCount;
 	}
 
-	private int initialProbe(int hashCode) {
-		return hashCode >= 0 ? hashCode & modulo : -hashCode & modulo;
+	private int initialProbe(final int hashCode) {
+ 	  return hashCode >= 0 ? hashCode & modulo : -hashCode & modulo;
 	}
 
 	private int probeNext(int index) {
@@ -108,7 +107,11 @@ public class SimpleIntMap<T> {
 	 */
 	public T get(int key) {
 		int slot = initialProbe(key);
-		if (key == keys[slot]) return values[slot];
+		// Test the lucky first shot. (>99% of cases in case of antlr4)
+		if (key == keys[slot]) {
+			return values[slot];
+		}
+		// Continue probing otherwise
 		while (true) {
 			slot = probeNext(slot + 1);
 			final int t = keys[slot];

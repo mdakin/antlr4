@@ -13,7 +13,6 @@ import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.LexerActionExecutor;
 import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.SemanticContext;
-import org.antlr.v4.runtime.dfa.SimpleIntMap.Instrumentation;
 import org.antlr.v4.runtime.misc.MurmurHash;
 
 import java.util.Arrays;
@@ -76,10 +75,6 @@ public class DFAState {
 
 	public int getEdgeCount() {
 		return edgeMap.size();
-	}
-
-	public Instrumentation instrumentation() {
-		return edgeMap.ins;
 	}
 
 	public boolean isAcceptState = false;
@@ -203,9 +198,4 @@ public class DFAState {
 		return buf.toString();
 	}
 
-	public String edgesToString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(edgeMap.toDebugString()).append('\n');
-		return sb.toString();
-	}
 }

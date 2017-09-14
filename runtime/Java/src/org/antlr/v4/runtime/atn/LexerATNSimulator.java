@@ -13,7 +13,6 @@ import org.antlr.v4.runtime.LexerNoViableAltException;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
-import org.antlr.v4.runtime.dfa.SimpleIntMap.Instrumentation;
 import org.antlr.v4.runtime.misc.Interval;
 
 import java.util.LinkedHashSet;
@@ -691,6 +690,8 @@ public class LexerATNSimulator extends ATNSimulator {
 		assert !configs.hasSemanticContext;
 
 		DFAState proposed = new DFAState(configs);
+		allStates.add(proposed);
+
 		ATNConfig firstConfigWithRuleStopState = null;
 		for (ATNConfig c : configs) {
 			if ( c.state instanceof RuleStopState )	{
@@ -711,7 +712,6 @@ public class LexerATNSimulator extends ATNSimulator {
 			if ( existing!=null ) return existing;
 
 			DFAState newState = proposed;
-			allStates.add(newState);
 
 			newState.stateNumber = dfa.states.size();
 			configs.setReadonly(true);
@@ -810,33 +810,17 @@ public class LexerATNSimulator extends ATNSimulator {
 	public String toString() {
 		Histogram h = new Histogram();
 		StringBuilder sb  = new StringBuilder();
-		long totalCollisions = 0;
-		long totalSkips = 0;
-		long totalTinyGets = 0;
-		long totalProbeGets = 0;
 		sb.append("Total DFA states: " + allStates.size()).append('\n');
 		int totalEdges = 0;
 		for (DFAState state: allStates) {
-			Instrumentation ins = state.instrumentation();
-			totalCollisions += ins.collisions;
-			totalSkips += ins.skips;
-			totalTinyGets += ins.totalTinyGet;
-			totalProbeGets += ins.totalProbeGet;
 			int edgeCount = state.getEdgeCount();
 			h.update(edgeCount);
 			totalEdges += state.getEdgeCount();
 		}
 		sb.append("Total DFA edges: " + totalEdges).append("\n\n");
-		sb.append("Total collisions: " + totalCollisions).append('\n');
-		sb.append("Total skips: " + totalSkips).append('\n');
-		sb.append("Total tiny gets: " + totalTinyGets).append('\n');
-		sb.append("Total probe gets: " + totalProbeGets).append('\n');
 		sb.append('\n');
 		sb.append("DFA edge count histogram:\n");
 		sb.append(h.print());
-		for (DFAState state : allStates) {
-			sb.append(state.edgesToString()).append('\n');
-		}
 		return sb.toString();
 	}
 }

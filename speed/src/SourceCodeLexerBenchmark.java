@@ -92,13 +92,6 @@ public class SourceCodeLexerBenchmark {
 		}
 	}
 
-	private static Lexer lexerInstance(ANTLRInputStream inputStream) {
-		TurkishLexer lexer = new TurkishLexer(inputStream);
-		lexer.removeErrorListeners();
-		lexer.addErrorListener(IGNORING_ERROR_LISTENER);
-		return lexer;
-	}
-
 	private ANTLRInputStream createStream(String filename) throws IOException {
 		File f = new File(filename);
 		return  new ANTLRFileStream(f.getAbsolutePath());
@@ -150,7 +143,7 @@ public class SourceCodeLexerBenchmark {
 		Stats stats = lex(fileName, lexer);
 //		updateFileStats(stats, fileName);
 		System.out.println(stats);
-//		System.out.println(lexer.getInterpreter());
+		System.out.println(lexer.getInterpreter());
 		return stats;
 	}
 
@@ -168,8 +161,8 @@ public class SourceCodeLexerBenchmark {
 		bench.benchmark(testFile, java8Lexer);
 
    	testFile = basedir + "java_guava_23.0";
-		java8Lexer = bench.createJava8Lexer(testFile);
-		bench.benchmark(testFile, java8Lexer);
+		Java8Lexer java8Lexer2 = bench.createJava8Lexer(testFile);
+		bench.benchmark(testFile, java8Lexer2);
 
 		testFile = basedir + "skia";
 		CPP14Lexer cppLexer = bench.createCpp14Lexer(testFile);
