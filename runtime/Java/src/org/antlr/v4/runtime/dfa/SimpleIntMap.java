@@ -124,6 +124,7 @@ public final class SimpleIntMap<T> {
 		}
 	}
 
+	// Sorted by key value, ascending.
 	public int[] getKeys() {
 		int[] keyArray = new int[keyCount];
 		int c = 0;
@@ -132,6 +133,7 @@ public final class SimpleIntMap<T> {
 				keyArray[c++] = key;
 			}
 		}
+		Arrays.sort(keyArray);
 		return keyArray;
 	}
 
