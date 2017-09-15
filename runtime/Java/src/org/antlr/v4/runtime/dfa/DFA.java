@@ -93,7 +93,7 @@ public class DFA {
 		if (!isPrecedenceDfa()) {
 			throw new IllegalStateException("Only precedence DFAs may contain a precedence start state.");
 		}
-		return s0.getState(precedence);
+		return s0.getTargetState(precedence);
 	}
 
 	/**

@@ -52,24 +52,6 @@ public class DFAState {
 	// Edges points to target State for a symbol.
 	public SimpleIntMap<DFAState> edges = new SimpleIntMap<>();
 
-	public void addEdge(int symbol, DFAState state) {
-		synchronized(edges) {
-			edges.put(symbol > 0 ? symbol : 0, state);
-		}
-	}
-
-  public DFAState getState(int symbol) {
-		return edges.get(symbol);
-	}
-
-	public int[] getEdgeKeys() {
-		return edges.getKeys();
-	}
-
-	public int getEdgeCount() {
-		return edges.size();
-	}
-
 	public boolean isAcceptState = false;
 
 	/** if accept state, what ttype do we match or alt do we predict?
@@ -123,6 +105,25 @@ public class DFAState {
 	public DFAState(int stateNumber) { this.stateNumber = stateNumber; }
 
 	public DFAState(ATNConfigSet configs) { this.configs = configs; }
+
+
+	public void addEdge(int symbol, DFAState state) {
+		synchronized(edges) {
+			edges.put(symbol > 0 ? symbol : 0, state);
+		}
+	}
+
+	public DFAState getTargetState(int symbol) {
+		return edges.get(symbol);
+	}
+
+	public int[] getEdgeKeys() {
+		return edges.getKeys();
+	}
+
+	public int getEdgeCount() {
+		return edges.size();
+	}
 
 	/** Get the set of all alts mentioned by all ATN configurations in this
 	 *  DFA state.

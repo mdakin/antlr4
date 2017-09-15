@@ -15,7 +15,6 @@ import org.antlr.v4.runtime.dfa.DFA;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.misc.Interval;
 
-import java.util.LinkedHashSet;
 import java.util.Locale;
 
 /** "dup" of ParserInterpreter */
@@ -246,7 +245,7 @@ public class LexerATNSimulator extends ATNSimulator {
 	 * already cached
 	 */
 	protected DFAState getExistingTargetState(DFAState s, int t) {
-		return s.getState(t);
+		return s.getTargetState(t);
 	}
 
 	/**

@@ -39,7 +39,7 @@ public class DFASerializer {
 		List<DFAState> states = dfa.getStates();
 		for (DFAState s : states) {
 			for (int key: s.getEdgeKeys()) {
-				DFAState t = s.getState(key);
+				DFAState t = s.getTargetState(key);
 				if (t != null && t.stateNumber != Integer.MAX_VALUE ) {
 					buf.append(getStateString(s));
 					String label = getEdgeLabel(key);

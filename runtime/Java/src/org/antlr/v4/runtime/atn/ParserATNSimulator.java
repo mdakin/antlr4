@@ -552,7 +552,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	 * already cached
 	 */
 	protected DFAState getExistingTargetState(DFAState previousD, int t) {
-		return previousD.getState(t);
+		return previousD.getTargetState(t);
 	}
 
 	/**
