@@ -17,9 +17,9 @@ import java.util.List;
  */
 public final class SimpleIntMap<T> {
 	private static final int DEFAULT_INITIAL_SIZE = 8;
-	// specifically selected to fit max 5,10 elements to 8,16 sized maps.
+	// Specifically selected to fit max 5 elements to 8, 10 elements to a 16 sized map.
 	private static final double LOAD_FACTOR = 0.65;
-	private static final int MAX_SIZE = 1 << 30;
+	private static final int MAX_SIZE = 1 << 29;
 	// Special value to mark empty cells.
 	private static final int EMPTY = Integer.MIN_VALUE;
 	private static final int MIN_KEY_VALUE = Integer.MIN_VALUE;
@@ -62,7 +62,14 @@ public final class SimpleIntMap<T> {
 		while (k < size) {
 			k <<= 1;
 		}
+		if (k > MAX_SIZE) {
+			throw new IllegalArgumentException("Size too large: " + size);
+		}
 		return (int) k;
+	}
+
+	public int capacity() {
+		return keys.length;
 	}
 
 	public int size() {
@@ -107,7 +114,7 @@ public final class SimpleIntMap<T> {
 	 */
 	public T get(int key) {
 		int slot = initialProbe(key);
-		// Test the lucky first shot. (>99% of cases in case of antlr4)
+		// Test the lucky first shot. (>99% of cases in antlr4)
 		if (key == keys[slot]) {
 			return values[slot];
 		}
@@ -122,6 +129,10 @@ public final class SimpleIntMap<T> {
 				return null;
 			}
 		}
+	}
+
+	public boolean containsKey(int key) {
+		return locate(key) >= 0;
 	}
 
 	// Sorted by key value, ascending.
@@ -160,10 +171,6 @@ public final class SimpleIntMap<T> {
 			}
 			slot = probeNext(slot + 1);
 		}
-	}
-
-	public boolean containsKey(int key) {
-		return locate(key) >= 0;
 	}
 
 	private int newSize() {

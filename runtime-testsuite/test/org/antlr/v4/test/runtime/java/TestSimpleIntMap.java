@@ -10,11 +10,11 @@ import org.antlr.v4.runtime.dfa.SimpleIntMap;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SimpleIntMapTest {
+public class TestSimpleIntMap {
 
   private List<int[]> fuzzLists = new ArrayList<>(10000);
 
-  public SimpleIntMapTest() {
+  public TestSimpleIntMap() {
     createFuzzingLists();
   }
 
@@ -23,7 +23,7 @@ public class SimpleIntMapTest {
     // Check first 10K initial sizes.
     for (int i=1; i < 10000; i++ ) {
       SimpleIntMap<String> im = new SimpleIntMap<>(1);
-      checkSize(im, 0); // Must roll up to nearest 2^n
+      checkSize(im, 0);
     }
   }
 
@@ -158,10 +158,12 @@ public class SimpleIntMapTest {
     }
   }
 
-  private void checkSize(SimpleIntMap<String> m, int size) {
-    assertEquals(size, m.size());
-    assertTrue(m.capacity() > m.size());
-  }
+	private void checkSize(SimpleIntMap<String> m, int size) {
+		assertEquals(size, m.size());
+		assertTrue(m.capacity() > m.size());
+		// Check capacity is 2^n
+		assertTrue((m.capacity() & (m.capacity() - 1)) == 0);
+	}
 
   // Fisher yates shuffle
   private static void shuffle(int[] array)
