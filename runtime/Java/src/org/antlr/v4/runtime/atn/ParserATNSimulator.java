@@ -2054,41 +2054,6 @@ public class ParserATNSimulator extends ATNSimulator {
 	 * otherwise this method returns the result of calling {@link #addDFAState}
 	 * on {@code to}
 	 */
-	protected DFAState addDFAEdge_(DFA dfa,
-								  DFAState from,
-								  int t,
-								  DFAState to)
-	{
-//		if ( debug ) {
-//			System.out.println("EDGE "+from+" -> "+to+" upon "+getTokenName(t));
-//		}
-//
-//		if (to == null) {
-//			return null;
-//		}
-//
-//		to = addDFAState(dfa, to); // used existing if possible not incoming
-//		if (from == null || t < -1 || t > atn.maxTokenType) {
-//			return to;
-//		}
-//
-//		synchronized (from) {
-//			if ( from.edges==null ) {
-//				from.edges = new DFAState[atn.maxTokenType+1+1];
-//			}
-//
-//			from.edges[t+1] = to; // connect
-//		}
-//
-//		if ( debug ) {
-//			System.out.println("DFA=\n"+dfa.toString(parser!=null?parser.getVocabulary():VocabularyImpl.EMPTY_VOCABULARY));
-//		}
-//
-//		return to;
-		return  null;
-	}
-
-
 	protected DFAState addDFAEdge(DFA dfa,
 			DFAState from,
 			int t,
@@ -2103,21 +2068,12 @@ public class ParserATNSimulator extends ATNSimulator {
 		}
 
 		to = addDFAState(dfa, to); // used existing if possible not incoming
-//		if (to != null) {
-//			return to;
-//		}
-//
 		if (from == null || t < -1 || t > atn.maxTokenType) {
 			return to;
 		}
 
 		synchronized (from) {
 			from.addEdge(t, to);
-//			if ( from.edges==null ) {
-//				from.edges = new DFAState[atn.maxTokenType+1+1];
-//			}
-//
-//			from.edges[t+1] = to; // connect
 		}
 
 		if ( debug ) {

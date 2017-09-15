@@ -38,12 +38,11 @@ public class DFASerializer {
 		StringBuilder buf = new StringBuilder();
 		List<DFAState> states = dfa.getStates();
 		for (DFAState s : states) {
-			int[] keys = s.getEdgeKeys();
-			for (int i=0; i<keys.length; i++) {
-				DFAState t = s.getState(keys[i]);
+			for (int key: s.getEdgeKeys()) {
+				DFAState t = s.getState(key);
 				if (t != null && t.stateNumber != Integer.MAX_VALUE ) {
 					buf.append(getStateString(s));
-					String label = getEdgeLabel(keys[i]);
+					String label = getEdgeLabel(key);
 					buf.append("-").append(label).append("->").append(getStateString(t)).append('\n');
 				}
 			}
