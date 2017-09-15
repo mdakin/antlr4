@@ -6,7 +6,6 @@
 
 package org.antlr.v4.runtime.dfa;
 
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.atn.ATN;
 import org.antlr.v4.runtime.atn.ATNConfig;
 import org.antlr.v4.runtime.atn.ATNConfigSet;
@@ -50,31 +49,25 @@ public class DFAState {
 
 	public ATNConfigSet configs = new ATNConfigSet();
 
-//	/** {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
-//	 *  {@link Token#EOF} maps to {@code edges[0]}.
-//	 */
-//	public DFAState[] edges;
-
-
-	// Represents edges of from this DFA state to other DFA states.
-	public SimpleIntMap<DFAState> edgeMap = new SimpleIntMap<>();
+	// Edges points to target State for a symbol.
+	public SimpleIntMap<DFAState> edges = new SimpleIntMap<>();
 
 	public void addEdge(int symbol, DFAState state) {
-		synchronized(edgeMap) {
-			edgeMap.put(symbol > 0 ? symbol : 0, state);
+		synchronized(edges) {
+			edges.put(symbol > 0 ? symbol : 0, state);
 		}
 	}
 
   public DFAState getState(int symbol) {
-		return edgeMap.get(symbol);
+		return edges.get(symbol);
 	}
 
 	public int[] getEdgeKeys() {
-		return edgeMap.getKeys();
+		return edges.getKeys();
 	}
 
 	public int getEdgeCount() {
-		return edgeMap.size();
+		return edges.size();
 	}
 
 	public boolean isAcceptState = false;

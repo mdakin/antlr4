@@ -6,7 +6,6 @@
 
 package org.antlr.v4.runtime.atn;
 
-import java.util.HashSet;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.Lexer;
@@ -18,11 +17,9 @@ import org.antlr.v4.runtime.misc.Interval;
 
 import java.util.LinkedHashSet;
 import java.util.Locale;
-import java.util.Set;
 
 /** "dup" of ParserInterpreter */
 public class LexerATNSimulator extends ATNSimulator {
-	private Set<DFAState> allStates ;
 	public static final boolean debug = false;
 	public static final boolean dfa_debug = false;
 
@@ -95,7 +92,6 @@ public class LexerATNSimulator extends ATNSimulator {
 							 PredictionContextCache sharedContextCache)
 	{
 		super(atn,sharedContextCache);
-		allStates = new LinkedHashSet<>();
 		this.decisionToDFA = decisionToDFA;
 		this.recog = recog;
 	}
@@ -249,22 +245,6 @@ public class LexerATNSimulator extends ATNSimulator {
 	 * {@code t}, or {@code null} if the target state for this edge is not
 	 * already cached
 	 */
-
-	protected DFAState getExistingTargetState_(DFAState s, int t) {
-//		if (s.edges == null || t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
-//			return null;
-//		}
-//
-//		DFAState target = s.edges[t - MIN_DFA_EDGE];
-//		if (debug && target != null) {
-//			System.out.println("reuse state "+s.stateNumber+
-//					" edge to "+target.stateNumber);
-//		}
-//
-//		return target;
-		return null;
-	}
-
 	protected DFAState getExistingTargetState(DFAState s, int t) {
 		return s.getState(t);
 	}
@@ -653,32 +633,12 @@ public class LexerATNSimulator extends ATNSimulator {
 		return to;
 	}
 
-	protected void addDFAEdge_(DFAState p, int t, DFAState q) {
-//		if (t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
-//			// Only track edges within the DFA bounds
-//			return;
-//		}
-//
-//		if ( debug ) {
-//			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
-//		}
-//
-//		synchronized (p) {
-//			if ( p.edges==null ) {
-//				//  make room for tokens 1..n and -1 masquerading as index 0
-//				p.edges = new DFAState[MAX_DFA_EDGE-MIN_DFA_EDGE+1];
-//			}
-//			p.edges[t - MIN_DFA_EDGE] = q; // connect
-//		}
-	}
-
 	protected void addDFAEdge(DFAState p, int t, DFAState q) {
 		if ( debug ) {
 			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
 		}
 		p.addEdge(t, q);
 	}
-
 
 	/** Add a new DFA state if there isn't one with this set of
 		configurations already. This method also detects the first
@@ -715,8 +675,6 @@ public class LexerATNSimulator extends ATNSimulator {
 			if ( existing!=null ) return existing;
 
 			DFAState newState = proposed;
-			allStates.add(proposed);
-
 			newState.stateNumber = dfa.states.size();
 			configs.setReadonly(true);
 			newState.configs = configs;
@@ -770,61 +728,5 @@ public class LexerATNSimulator extends ATNSimulator {
 		if ( t==-1 ) return "EOF";
 		//if ( atn.g!=null ) return atn.g.getTokenDisplayName(t);
 		return "'"+(char)t+"'";
-	}
-
-	// Simple histogram
-	private static class Histogram {
-		static int[] DEFAULT_HISTOGRAM_BUCKETS =
-				{0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 32, 64, 100, 200, 500, 1000, 10000, Integer.MAX_VALUE};
-		int[] buckets;
-		int[] counts;
-		double[] percents;
-		long total;
-
-		Histogram() {
-			buckets = DEFAULT_HISTOGRAM_BUCKETS.clone();
-			counts = new int[buckets.length];
-			percents = new double[buckets.length];
-		}
-
-		void update(int value) {
-			int i = 0;
-			while (buckets[i] < value) i++;
-			counts[i]++;
-			total++;
-		}
-
-		String print() {
-			int sum = 0;
-			for (int i = 0; i < counts.length; i++){
-				sum += counts[i];
-				percents[i] = 100.0 * sum / total;
-			}
-			StringBuilder sb = new StringBuilder();
-			for (int i = 1; i < buckets.length; i++) {
-				sb.append("(" + buckets[i - 1] + ".." + buckets[i] + "]: ")
-						.append(counts[i])
-						.append(String.format("  %.2f", percents[i])).append('%')
-						.append('\n');
-			}
-			return sb.toString();
-		}
-	}
-
-	public String toString() {
-		Histogram h = new Histogram();
-		StringBuilder sb  = new StringBuilder();
-		sb.append("Total DFA states: " + allStates.size()).append('\n');
-		int totalEdges = 0;
-		for (DFAState state: allStates) {
-			int edgeCount = state.getEdgeCount();
-			h.update(edgeCount);
-			totalEdges += state.getEdgeCount();
-		}
-		sb.append("Total DFA edges: " + totalEdges).append("\n\n");
-		sb.append('\n');
-		sb.append("DFA edge count histogram:\n");
-		sb.append(h.print());
-		return sb.toString();
 	}
 }

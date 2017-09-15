@@ -13,7 +13,6 @@ import org.antlr.v4.runtime.atn.DecisionState;
 import org.antlr.v4.runtime.atn.StarLoopEntryState;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -67,7 +66,7 @@ public class DFA {
 	/**
 	 * Gets whether this DFA is a precedence DFA. Precedence DFAs use a special
 	 * start state {@link #s0} which is not stored in {@link #states}. The
-	 * {@link DFAState#edgeMap} map for this start state contains outgoing edges
+	 * {@link DFAState#edges} map for this start state contains outgoing edges
 	 * supplying individual start states corresponding to specific precedence
 	 * values.
 	 *
