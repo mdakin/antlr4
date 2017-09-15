@@ -55,7 +55,6 @@ public class DFA {
 			if (((StarLoopEntryState)atnStartState).isPrecedenceDecision) {
 				precedenceDfa = true;
 				DFAState precedenceState = new DFAState(new ATNConfigSet());
-				precedenceState.edges = new DFAState[0];
 				precedenceState.isAcceptState = false;
 				precedenceState.requiresFullContext = false;
 				this.s0 = precedenceState;
@@ -68,7 +67,7 @@ public class DFA {
 	/**
 	 * Gets whether this DFA is a precedence DFA. Precedence DFAs use a special
 	 * start state {@link #s0} which is not stored in {@link #states}. The
-	 * {@link DFAState#edges} array for this start state contains outgoing edges
+	 * {@link DFAState#edgeMap} map for this start state contains outgoing edges
 	 * supplying individual start states corresponding to specific precedence
 	 * values.
 	 *
@@ -95,13 +94,7 @@ public class DFA {
 		if (!isPrecedenceDfa()) {
 			throw new IllegalStateException("Only precedence DFAs may contain a precedence start state.");
 		}
-
-		// s0.edges is never null for a precedence DFA
-		if (precedence < 0 || precedence >= s0.edges.length) {
-			return null;
-		}
-
-		return s0.edges[precedence];
+		return s0.getState(precedence);
 	}
 
 	/**
@@ -127,12 +120,7 @@ public class DFA {
 		// synchronization on s0 here is ok. when the DFA is turned into a
 		// precedence DFA, s0 will be initialized once and not updated again
 		synchronized (s0) {
-			// s0.edges is never null for a precedence DFA
-			if (precedence >= s0.edges.length) {
-				s0.edges = Arrays.copyOf(s0.edges, precedence + 1);
-			}
-
-			s0.edges[precedence] = startState;
+			s0.addEdge(precedence, startState);
 		}
 	}
 

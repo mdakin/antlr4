@@ -111,7 +111,7 @@ public final class SimpleIntMap<T> {
 		if (key == keys[slot]) {
 			return values[slot];
 		}
-		// Continue probing otherwise
+		// Continue linear probing otherwise
 		while (true) {
 			slot = probeNext(slot + 1);
 			final int t = keys[slot];

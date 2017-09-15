@@ -6,6 +6,7 @@
 
 package org.antlr.v4.runtime.atn;
 
+import java.util.HashSet;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.IntStream;
 import org.antlr.v4.runtime.Lexer;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 /** "dup" of ParserInterpreter */
 public class LexerATNSimulator extends ATNSimulator {
+	private Set<DFAState> allStates ;
 	public static final boolean debug = false;
 	public static final boolean dfa_debug = false;
 
@@ -93,6 +95,7 @@ public class LexerATNSimulator extends ATNSimulator {
 							 PredictionContextCache sharedContextCache)
 	{
 		super(atn,sharedContextCache);
+		allStates = new LinkedHashSet<>();
 		this.decisionToDFA = decisionToDFA;
 		this.recog = recog;
 	}
@@ -248,17 +251,18 @@ public class LexerATNSimulator extends ATNSimulator {
 	 */
 
 	protected DFAState getExistingTargetState_(DFAState s, int t) {
-		if (s.edges == null || t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
-			return null;
-		}
-
-		DFAState target = s.edges[t - MIN_DFA_EDGE];
-		if (debug && target != null) {
-			System.out.println("reuse state "+s.stateNumber+
-					" edge to "+target.stateNumber);
-		}
-
-		return target;
+//		if (s.edges == null || t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
+//			return null;
+//		}
+//
+//		DFAState target = s.edges[t - MIN_DFA_EDGE];
+//		if (debug && target != null) {
+//			System.out.println("reuse state "+s.stateNumber+
+//					" edge to "+target.stateNumber);
+//		}
+//
+//		return target;
+		return null;
 	}
 
 	protected DFAState getExistingTargetState(DFAState s, int t) {
@@ -650,22 +654,22 @@ public class LexerATNSimulator extends ATNSimulator {
 	}
 
 	protected void addDFAEdge_(DFAState p, int t, DFAState q) {
-		if (t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
-			// Only track edges within the DFA bounds
-			return;
-		}
-
-		if ( debug ) {
-			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
-		}
-
-		synchronized (p) {
-			if ( p.edges==null ) {
-				//  make room for tokens 1..n and -1 masquerading as index 0
-				p.edges = new DFAState[MAX_DFA_EDGE-MIN_DFA_EDGE+1];
-			}
-			p.edges[t - MIN_DFA_EDGE] = q; // connect
-		}
+//		if (t < MIN_DFA_EDGE || t > MAX_DFA_EDGE) {
+//			// Only track edges within the DFA bounds
+//			return;
+//		}
+//
+//		if ( debug ) {
+//			System.out.println("EDGE "+p+" -> "+q+" upon "+((char)t));
+//		}
+//
+//		synchronized (p) {
+//			if ( p.edges==null ) {
+//				//  make room for tokens 1..n and -1 masquerading as index 0
+//				p.edges = new DFAState[MAX_DFA_EDGE-MIN_DFA_EDGE+1];
+//			}
+//			p.edges[t - MIN_DFA_EDGE] = q; // connect
+//		}
 	}
 
 	protected void addDFAEdge(DFAState p, int t, DFAState q) {
@@ -682,7 +686,7 @@ public class LexerATNSimulator extends ATNSimulator {
 		traversing the DFA, we will know which rule to accept.
 	 */
 
-	private Set<DFAState> allStates = new LinkedHashSet<>();
+
 	protected DFAState addDFAState(ATNConfigSet configs) {
 		/* the lexer evaluates predicates on-the-fly; by this point configs
 		 * should not contain any configurations with unevaluated predicates.
@@ -690,7 +694,6 @@ public class LexerATNSimulator extends ATNSimulator {
 		assert !configs.hasSemanticContext;
 
 		DFAState proposed = new DFAState(configs);
-		allStates.add(proposed);
 
 		ATNConfig firstConfigWithRuleStopState = null;
 		for (ATNConfig c : configs) {
@@ -712,6 +715,7 @@ public class LexerATNSimulator extends ATNSimulator {
 			if ( existing!=null ) return existing;
 
 			DFAState newState = proposed;
+			allStates.add(proposed);
 
 			newState.stateNumber = dfa.states.size();
 			configs.setReadonly(true);

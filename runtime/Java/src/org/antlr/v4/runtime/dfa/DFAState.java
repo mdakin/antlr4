@@ -50,10 +50,10 @@ public class DFAState {
 
 	public ATNConfigSet configs = new ATNConfigSet();
 
-	/** {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
-	 *  {@link Token#EOF} maps to {@code edges[0]}.
-	 */
-	public DFAState[] edges;
+//	/** {@code edges[symbol]} points to target of symbol. Shift up by 1 so (-1)
+//	 *  {@link Token#EOF} maps to {@code edges[0]}.
+//	 */
+//	public DFAState[] edges;
 
 
 	// Represents edges of from this DFA state to other DFA states.
@@ -65,12 +65,12 @@ public class DFAState {
 		}
 	}
 
-    public DFAState getState(int symbol) {
-		return symbol > 0 ? edgeMap.get(symbol) : edgeMap.get(0);
+  public DFAState getState(int symbol) {
+		return edgeMap.get(symbol);
 	}
 
-	public boolean hasAnyEdge() {
-		return edgeMap != null;
+	public int[] getEdgeKeys() {
+		return edgeMap.getKeys();
 	}
 
 	public int getEdgeCount() {
