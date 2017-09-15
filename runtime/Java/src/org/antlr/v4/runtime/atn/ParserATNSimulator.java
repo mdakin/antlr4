@@ -2103,13 +2103,13 @@ public class ParserATNSimulator extends ATNSimulator {
 		}
 
 		to = addDFAState(dfa, to); // used existing if possible not incoming
-		if (to != null) {
-			return to;
-		}
-//
-//		if (from == null || t < -1 || t > atn.maxTokenType) {
+//		if (to != null) {
 //			return to;
 //		}
+//
+		if (from == null || t < -1 || t > atn.maxTokenType) {
+			return to;
+		}
 
 		synchronized (from) {
 			from.addEdge(t, to);

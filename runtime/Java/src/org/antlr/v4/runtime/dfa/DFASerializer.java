@@ -43,7 +43,7 @@ public class DFASerializer {
 				DFAState t = s.getState(keys[i]);
 				if (t != null && t.stateNumber != Integer.MAX_VALUE ) {
 					buf.append(getStateString(s));
-					String label = getEdgeLabel(i);
+					String label = getEdgeLabel(keys[i]);
 					buf.append("-").append(label).append("->").append(getStateString(t)).append('\n');
 				}
 			}
@@ -56,7 +56,7 @@ public class DFASerializer {
 	}
 
 	protected String getEdgeLabel(int i) {
-		return vocabulary.getDisplayName(i - 1);
+		return vocabulary.getDisplayName(i);
 	}
 
 
