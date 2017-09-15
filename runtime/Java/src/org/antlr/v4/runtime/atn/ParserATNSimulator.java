@@ -2054,10 +2054,7 @@ public class ParserATNSimulator extends ATNSimulator {
 	 * otherwise this method returns the result of calling {@link #addDFAState}
 	 * on {@code to}
 	 */
-	protected DFAState addDFAEdge(DFA dfa,
-			DFAState from,
-			int t,
-			DFAState to)
+	protected DFAState addDFAEdge(DFA dfa, DFAState from, int t, DFAState to)
 	{
 		if ( debug ) {
 			System.out.println("EDGE "+from+" -> "+to+" upon "+getTokenName(t));
@@ -2067,14 +2064,12 @@ public class ParserATNSimulator extends ATNSimulator {
 			return null;
 		}
 
-		to = addDFAState(dfa, to); // used existing if possible not incoming
+		to = addDFAState(dfa, to); // Use existing if possible not incoming
 		if (from == null || t < -1 || t > atn.maxTokenType) {
 			return to;
 		}
 
-		synchronized (from) {
-			from.addEdge(t, to);
-		}
+  	from.addEdge(t, to);
 
 		if ( debug ) {
 			System.out.println("DFA=\n"+dfa.toString(parser!=null?parser.getVocabulary():VocabularyImpl.EMPTY_VOCABULARY));

@@ -116,11 +116,7 @@ public class DFA {
 			return;
 		}
 
-		// synchronization on s0 here is ok. when the DFA is turned into a
-		// precedence DFA, s0 will be initialized once and not updated again
-		synchronized (s0) {
-			s0.addEdge(precedence, startState);
-		}
+		s0.addEdge(precedence, startState);
 	}
 
 	/**

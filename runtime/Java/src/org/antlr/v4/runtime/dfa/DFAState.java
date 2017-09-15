@@ -50,7 +50,7 @@ public class DFAState {
 	public ATNConfigSet configs = new ATNConfigSet();
 
 	/**
-	 * An edges points to a target State for a symbol.
+	 * Edges points to a target State for a symbol.
 	 * This map represents all edges from this state to all connected states.
  	 */
 	private final SimpleIntMap<DFAState> edges = new SimpleIntMap<>();
@@ -110,7 +110,9 @@ public class DFAState {
 	public DFAState(ATNConfigSet configs) { this.configs = configs; }
 
 	public void addEdge(int symbol, DFAState state) {
+		synchronized(this) {
 			edges.put(symbol, state);
+		}
 	}
 
 	public DFAState getTargetState(int symbol) {
