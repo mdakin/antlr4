@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.atn.LexerATNSimulator;
 
 public class SourceCodeLexerBenchmark {
 
-	static String basedir = "/usr/local/google/home/mdakin/tmp/codebases/";
+	static String basedir = "/home/mdakin/tmp/codebases/";
 
 	private static final BaseErrorListener IGNORING_ERROR_LISTENER = new BaseErrorListener() {
 		@Override
@@ -44,10 +44,15 @@ public class SourceCodeLexerBenchmark {
 		long asciiCharCount;
 		long totalTokens;
 		double asciiRatio;
+		int[] tokenTypes;
+		int[] tokenLengths;
+		int emptyTokens;
 
 		public Stats(String filename, String grammar) {
 			this.fileName = filename;
 			this.grammar = grammar;
+			this.tokenTypes = new int[500];
+			this.tokenLengths = new int[500];
 			init();
 		}
 
@@ -82,6 +87,15 @@ public class SourceCodeLexerBenchmark {
 
 		public void update(Token token) {
 			totalTokens++;
+			// Count token types
+			tokenTypes[Math.min(token.getType(), tokenTypes.length-1)]++;
+			// Count token sizes
+			String text = token.getText();
+			tokenLengths[Math.min(text.length(), tokenLengths.length-1)]++;
+			// Count empty tokens
+			if (text.matches("\\s+")) {
+				emptyTokens++;
+			}
 		}
 
 		public void update(int c) {
@@ -143,7 +157,7 @@ public class SourceCodeLexerBenchmark {
 		Stats stats = lex(fileName, lexer);
 //		updateFileStats(stats, fileName);
 		System.out.println(stats);
-		System.out.println(lexer.getInterpreter());
+//		System.out.println(lexer.getInterpreter());
 		return stats;
 	}
 
