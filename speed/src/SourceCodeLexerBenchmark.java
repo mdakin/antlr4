@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+
 import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BaseErrorListener;
@@ -88,14 +90,14 @@ public class SourceCodeLexerBenchmark {
 		public void update(Token token) {
 			totalTokens++;
 			// Count token types
-			tokenTypes[Math.min(token.getType(), tokenTypes.length-1)]++;
-			// Count token sizes
-			String text = token.getText();
-			tokenLengths[Math.min(text.length(), tokenLengths.length-1)]++;
-			// Count empty tokens
-			if (text.matches("\\s+")) {
-				emptyTokens++;
-			}
+//			tokenTypes[Math.min(token.getType(), tokenTypes.length-1)]++;
+//			// Count token sizes
+//			String text = token.getText();
+//			tokenLengths[Math.min(text.length(), tokenLengths.length-1)]++;
+//			// Count empty tokens
+//			if (text.matches("\\s+")) {
+//				emptyTokens++;
+//			}
 		}
 
 		public void update(int c) {
@@ -109,6 +111,13 @@ public class SourceCodeLexerBenchmark {
 	private ANTLRInputStream createStream(String filename) throws IOException {
 		File f = new File(filename);
 		return  new ANTLRFileStream(f.getAbsolutePath());
+	}
+
+	public TurkishLexer createTrLexer(String fileName) throws IOException {
+		TurkishLexer lexer = new TurkishLexer(createStream(fileName));
+		lexer.removeErrorListeners();
+		lexer.addErrorListener(IGNORING_ERROR_LISTENER);
+		return lexer;
 	}
 
 	public Java8Lexer createJava8Lexer(String fileName) throws IOException {
@@ -166,21 +175,27 @@ public class SourceCodeLexerBenchmark {
 
 		String testFile;
 
-		testFile = basedir + "linux_kernel_4.13_100MB";
-		CLexer cLexer = bench.createCLexer(testFile);
-		bench.benchmark(testFile, cLexer);
+//		testFile = basedir + "linux_kernel_4.13_100MB";
+//		CLexer cLexer = bench.createCLexer(testFile);
+//		bench.benchmark(testFile, cLexer);
+//
+//		testFile = basedir + "jdk8";
+//		Java8Lexer java8Lexer = bench.createJava8Lexer(testFile);
+//		bench.benchmark(testFile, java8Lexer);
+//
+//   	    testFile = basedir + "java_guava_23.0";
+//		Java8Lexer java8Lexer2 = bench.createJava8Lexer(testFile);
+//		bench.benchmark(testFile, java8Lexer2);
+//
+//		testFile = basedir + "skia";
+//		CPP14Lexer cppLexer = bench.createCpp14Lexer(testFile);
+//		bench.benchmark(testFile, cppLexer);
 
-		testFile = basedir + "jdk8";
-		Java8Lexer java8Lexer = bench.createJava8Lexer(testFile);
-		bench.benchmark(testFile, java8Lexer);
+		String strbasedir = "/home/mdakin/tmp/reduced/";
+		testFile = strbasedir + "www.cnnturk.com.corpus_ascii_2";
+		TurkishLexer trLexer = bench.createTrLexer(testFile);
+		bench.benchmark(testFile, trLexer);
 
-   	testFile = basedir + "java_guava_23.0";
-		Java8Lexer java8Lexer2 = bench.createJava8Lexer(testFile);
-		bench.benchmark(testFile, java8Lexer2);
-
-		testFile = basedir + "skia";
-		CPP14Lexer cppLexer = bench.createCpp14Lexer(testFile);
-		bench.benchmark(testFile, cppLexer);
 	}
 
 }

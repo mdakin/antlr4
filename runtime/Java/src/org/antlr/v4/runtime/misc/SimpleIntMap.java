@@ -1,4 +1,4 @@
-package org.antlr.v4.runtime.dfa;
+package org.antlr.v4.runtime.misc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * A simple hashmap with integer keys and T values.
- * Implementation is open address linear probing.
+ * implements open address linear probing algorithm.
  * <p>
  * Constraints:
  * - Only support key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
@@ -16,13 +16,19 @@ import java.util.List;
  * - Class is not thread safe.
  */
 public final class SimpleIntMap<T> {
-	private static final int DEFAULT_INITIAL_SIZE = 8;
-	// Specifically selected to fit max 5 elements to 8, 10 elements to a 16 sized map.
-	private static final double LOAD_FACTOR = 0.65;
+
+	private static final int DEFAULT_INITIAL_CAPACITY = 8;
+	/**
+	 * Capacity of the map is expanded when size reaches to
+	 * capacity * LOAD_FACTOR This value is specifically selected to fit
+	 * max 5 elements to 8 and 10 elements to a 16 sized map.
+	 */
+	private static final float LOAD_FACTOR = 0.65f;
+
 	private static final int MAX_SIZE = 1 << 29;
+
 	// Special value to mark empty cells.
 	private static final int EMPTY = Integer.MIN_VALUE;
-	private static final int MIN_KEY_VALUE = Integer.MIN_VALUE;
 
 	// Backing arrays for keys and value references.
 	private int[] keys;
@@ -30,21 +36,26 @@ public final class SimpleIntMap<T> {
 
 	// Number of keys in the map = size of the map.
 	private int keyCount;
+
 	// When size reaches a threshold, backing arrays are expanded.
 	private int threshold;
-	// Map size is always a power of 2. With this property,
-	// integer modulo operation (x % size) can be replaced with
-	// (x & (size - 1)) and we keep (size - 1) value in this variable.
+
+	/**
+	 * Map size is always a power of 2. With this property,
+	 * integer modulo operation (x % size) can be replaced with
+	 * (x & (size - 1)) and we keep (size - 1) value in this variable.
+	 */
 	private int modulo;
 
 	public SimpleIntMap() {
-		this(DEFAULT_INITIAL_SIZE);
+		this(DEFAULT_INITIAL_CAPACITY);
 	}
 
 	/**
 	 * @param size initial internal array size. It must be a positive number.
-	 *     If value is not a power of two, size will be the nearest larger power of two.
+	 * If value is not a power of two, size will be the nearest larger power of two.
 	 */
+	@SuppressWarnings("unchecked")
 	public SimpleIntMap(int size) {
 		size = adjustInitialSize(size) ;
 		keys = new int[size];
@@ -85,7 +96,7 @@ public final class SimpleIntMap<T> {
 	}
 
 	private void checkKey(int key) {
-		if (key <= MIN_KEY_VALUE) {
+		if (key == EMPTY) {
 			throw new IllegalArgumentException("Illegal key: " + key);
 		}
 	}
@@ -107,14 +118,15 @@ public final class SimpleIntMap<T> {
 	}
 
 	/**
-	 * Returns the value associated with given key.
-	 * If key does not exist, returns null.
-	 * <p>
-	 * For key = Integer.MIN_INT behavior is undefined.
+	 * @return The value {@code T} taht is mapped to given {@code key}.
+	 * or  {@code null} If key does not exist,
+	 *
+	 * @throws IllegalArgumentException if key is {@code Integer.MIN_INT}
 	 */
 	public T get(int key) {
+		checkKey(key);
 		int slot = initialProbe(key);
-		// Test the lucky first shot. (>99% of cases in antlr4)
+		// Test the lucky first shot.
 		if (key == keys[slot]) {
 			return values[slot];
 		}
@@ -135,12 +147,14 @@ public final class SimpleIntMap<T> {
 		return locate(key) >= 0;
 	}
 
-	// Sorted by key value, ascending.
+	/**
+	 * @return The array of keys in the map. Sorted ascending.
+	 */
 	public int[] getKeys() {
 		int[] keyArray = new int[keyCount];
 		int c = 0;
 		for (int key : keys) {
-			if (key > MIN_KEY_VALUE) {
+			if (key != EMPTY) {
 				keyArray[c++] = key;
 			}
 		}
@@ -148,6 +162,9 @@ public final class SimpleIntMap<T> {
 		return keyArray;
 	}
 
+	/**
+	 * @return The array of keys in the map. Sorted ascending.
+	 */
 	public List<T> getValues() {
 		List<T> result = new ArrayList<>();
 		for (int i = 0; i < keys.length; i++) {
@@ -181,11 +198,15 @@ public final class SimpleIntMap<T> {
 		return (int) size;
 	}
 
-	private void expand() {
+
+	/**
+	 * @return Expands backing arrays by doubling the size of backing arrays.
+	 */
+     private void expand() {
 		int size = newSize();
 		SimpleIntMap<T> h = new SimpleIntMap<>(size);
 		for (int i = 0; i < keys.length; i++) {
-			if (keys[i] > MIN_KEY_VALUE) {
+			if (keys[i] != EMPTY) {
 				h.put(keys[i], values[i]);
 			}
 		}

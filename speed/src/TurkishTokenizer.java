@@ -69,39 +69,47 @@ public class TurkishTokenizer {
 		asc['Ş'] = 'S';
 		asc['Ü'] = 'U';
 	}
+	static int cnt = 0;
 
 	static int asciify(int input) {
 		if (input < 128) return input;
 		// Asciify Turkish chars
-		if (input < 1000 && asc[input] != 0) {
-			return asc[input];
+    	if (cnt++ < 3) {
+			// Else just return x
+			if (input < 1000 && asc[input] != 0) {
+				return asc[input];
+			} else {
+				return 'x';
+	    	}
 		}
-		// Else just return x
-		return 'x';
+		else {
+			cnt = 0;
+			return input;
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
-		String fileName = "/usr/local/google/home/mdakin/tmp/reduced/www.cnnturk.com.corpus";
-		String fileNameAscii = fileName + "_ascii";
-		File f = new File(fileName);
+		String fileName = "/home/mdakin/tmp/reduced/www.cnnturk.com.corpus";
+		String fileNameAscii = fileName + "_ascii_2";
+		File f = new File(fileNameAscii);
 
-		for (int i=0; i<1; i++) {
-			ANTLRInputStream inputStream = new ANTLRFileStream(f.getAbsolutePath());
-			TurkishLexer lexer = lexerInstance(inputStream);
-			// TurkishLexerAscii lexer = lexerInstanceAscii(inputStream);
-			long startTime = System.currentTimeMillis();
-			getAllTokens(lexer);
-			long elapsedMillis = System.currentTimeMillis() - startTime;
-			LexerATNSimulator interpreter = lexer.getInterpreter();
-			System.out.println(interpreter);
-			System.out.println("Total time: " + elapsedMillis + "ms.");
-			System.out.printf("Tokens per second: %.2f\n", tokens * 1000.0 / elapsedMillis);
-		}
+//		for (int i=0; i<1; i++) {
+//			ANTLRInputStream inputStream = new ANTLRFileStream(f.getAbsolutePath());
+//			TurkishLexer lexer = lexerInstance(inputStream);
+//			// TurkishLexerAscii lexer = lexerInstanceAscii(inputStream);
+//			long startTime = System.currentTimeMillis();
+//			getAllTokens(lexer);
+//			long elapsedMillis = System.currentTimeMillis() - startTime;
+//			LexerATNSimulator interpreter = lexer.getInterpreter();
+//			System.out.println(interpreter);
+//			System.out.println("Total time: " + elapsedMillis + "ms.");
+//			System.out.printf("Tokens per second: %.2f\n", tokens * 1000.0 / elapsedMillis);
+//		}
 
-//		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f));
-//		InputStreamReader ir = new InputStreamReader(bis, StandardCharsets.UTF_8);
-//
-//    FileOutputStream fos = new FileOutputStream(f + "_ascii");
+		BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f));
+		InputStreamReader ir = new InputStreamReader(bis, StandardCharsets.UTF_8);
+
+//    FileOutputStream fos = new FileOutputStream(f + "_ascii_2");
 //		BufferedOutputStream bos = new BufferedOutputStream(fos);
 //		while (true) {
 //			int c = ir.read();
@@ -110,16 +118,16 @@ public class TurkishTokenizer {
 //		}
 //		fos.close();
 
-//		long total = 0;
-//		long ascii = 0;
-//		while (true) {
-//			int c = ir.read();
-//			if (c < 0) break;
-//			total++;
-//			if (c < 128) ascii++;
-//		}
-//		System.out.println("Total: " + total + " Ascii: " + ascii);
-//		System.out.printf("Percent: %.2f", (100.0 * ascii / total));
+		long total = 0;
+		long ascii = 0;
+		while (true) {
+			int c = ir.read();
+			if (c < 0) break;
+			total++;
+			if (c < 128) ascii++;
+		}
+		System.out.println("Total: " + total + " Ascii: " + ascii);
+		System.out.printf("Percent: %.2f", (100.0 * ascii / total));
 
 	}
 }
