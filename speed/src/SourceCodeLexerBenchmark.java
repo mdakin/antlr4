@@ -175,13 +175,13 @@ public class SourceCodeLexerBenchmark {
 
 		String testFile;
 
-//		testFile = basedir + "linux_kernel_4.13_100MB";
-//		CLexer cLexer = bench.createCLexer(testFile);
-//		bench.benchmark(testFile, cLexer);
-//
-//		testFile = basedir + "jdk8";
-//		Java8Lexer java8Lexer = bench.createJava8Lexer(testFile);
-//		bench.benchmark(testFile, java8Lexer);
+		testFile = basedir + "linux_kernel_4.13_100MB";
+		CLexer cLexer = bench.createCLexer(testFile);
+		bench.benchmark(testFile, cLexer);
+
+		testFile = basedir + "jdk8";
+		Java8Lexer java8Lexer = bench.createJava8Lexer(testFile);
+		bench.benchmark(testFile, java8Lexer);
 //
 //   	    testFile = basedir + "java_guava_23.0";
 //		Java8Lexer java8Lexer2 = bench.createJava8Lexer(testFile);
@@ -191,10 +191,10 @@ public class SourceCodeLexerBenchmark {
 //		CPP14Lexer cppLexer = bench.createCpp14Lexer(testFile);
 //		bench.benchmark(testFile, cppLexer);
 
-		String strbasedir = "/home/mdakin/tmp/reduced/";
-		testFile = strbasedir + "www.cnnturk.com.corpus";
-		TurkishLexer trLexer = bench.createTrLexer(testFile);
-		bench.benchmark(testFile, trLexer);
+//		String strbasedir = "/home/mdakin/tmp/reduced/";
+//		testFile = strbasedir + "www.cnnturk.com.corpus";
+//		TurkishLexer trLexer = bench.createTrLexer(testFile);
+//		bench.benchmark(testFile, trLexer);
 
 	}
 
