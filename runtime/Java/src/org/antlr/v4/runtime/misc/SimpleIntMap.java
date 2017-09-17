@@ -21,7 +21,7 @@ public final class SimpleIntMap<T> {
 	private static final int DEFAULT_INITIAL_CAPACITY = 8;
 	/**
 	 * Capacity of the map is expanded when size reaches to
-	 * capacity * LOAD_FACTOR This value is specifically selected to fit
+	 * capacity * LOAD_FACTOR. This value is selected to fit
 	 * max 5 elements to 8 and 10 elements to a 16 sized map.
 	 */
 	private static final float LOAD_FACTOR = 0.65f;
@@ -203,7 +203,7 @@ public final class SimpleIntMap<T> {
 
 
 	/**
-	 * @return Expands backing arrays by doubling the size of backing arrays.
+	 * Expands backing arrays by doubling their capacity.
 	 */
      private void expand() {
 		int capacity = newCapacity();
