@@ -192,7 +192,7 @@ public class SourceCodeLexerBenchmark {
 //		bench.benchmark(testFile, cppLexer);
 
 		String strbasedir = "/home/mdakin/tmp/reduced/";
-		testFile = strbasedir + "www.cnnturk.com.corpus_ascii_2";
+		testFile = strbasedir + "www.cnnturk.com.corpus";
 		TurkishLexer trLexer = bench.createTrLexer(testFile);
 		bench.benchmark(testFile, trLexer);
 

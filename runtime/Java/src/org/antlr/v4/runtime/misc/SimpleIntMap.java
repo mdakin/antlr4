@@ -11,7 +11,7 @@ import java.util.List;
  * Constraints:
  * - Supports int key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
  * - Does not implement Map interface
- * - Size can be max 1 << 30
+ * - Size can be max 1 << 29
  * - Does not support remove.
  * - Does not implement Iterable.
  * - Class is not thread safe.
