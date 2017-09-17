@@ -9,7 +9,8 @@ import java.util.List;
  * implements open address linear probing algorithm.
  * <p>
  * Constraints:
- * - Only support key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
+ * - Supports int key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
+ * - Does not implement Map interface
  * - Size can be max 1 << 30
  * - Does not support remove.
  * - Does not implement Iterable.
@@ -41,9 +42,10 @@ public final class SimpleIntMap<T> {
 	private int threshold;
 
 	/**
-	 * Map size is always a power of 2. With this property,
-	 * integer modulo operation (x % size) can be replaced with
-	 * (x & (size - 1)) and we keep (size - 1) value in this variable.
+	 * Map capacity is always a power of 2. With this property,
+	 * integer modulo operation (key % capacity) can be replaced with
+	 * (key & (capacity - 1))
+	 * We keep (capacity - 1) value in this variable.
 	 */
 	private int modulo;
 
@@ -52,29 +54,30 @@ public final class SimpleIntMap<T> {
 	}
 
 	/**
-	 * @param size initial internal array size. It must be a positive number.
-	 * If value is not a power of two, size will be the nearest larger power of two.
+	 * @param capacity initial internal array size. It must be a positive
+	 * number. If value is not a power of two, size will be the nearest
+	 * larger power of two.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleIntMap(int size) {
-		size = adjustInitialSize(size) ;
-		keys = new int[size];
+	public SimpleIntMap(int capacity) {
+		capacity = adjustInitialSize(capacity) ;
+		keys = new int[capacity];
 		values = (T[]) new Object[keys.length];
 		Arrays.fill(keys, EMPTY);
 		modulo = keys.length - 1;
-		threshold = (int) (size * LOAD_FACTOR);
+		threshold = (int) (capacity * LOAD_FACTOR);
 	}
 
-	private int adjustInitialSize(int size) {
-		if (size < 1) {
-			throw new IllegalArgumentException("Size must > 0: " + size);
+	private int adjustInitialSize(int capacity) {
+		if (capacity < 1) {
+			throw new IllegalArgumentException("Size must > 0: " + capacity);
 		}
 		long k = 1;
-		while (k < size) {
+		while (k < capacity) {
 			k <<= 1;
 		}
 		if (k > MAX_SIZE) {
-			throw new IllegalArgumentException("Size too large: " + size);
+			throw new IllegalArgumentException("Size too large: " + capacity);
 		}
 		return (int) k;
 	}
@@ -190,7 +193,7 @@ public final class SimpleIntMap<T> {
 		}
 	}
 
-	private int newSize() {
+	private int newCapacity() {
 		long size = (long) (keys.length * 2);
 		if (keys.length > MAX_SIZE) {
 			throw new RuntimeException("Map size is too large.");
@@ -203,8 +206,8 @@ public final class SimpleIntMap<T> {
 	 * @return Expands backing arrays by doubling the size of backing arrays.
 	 */
      private void expand() {
-		int size = newSize();
-		SimpleIntMap<T> h = new SimpleIntMap<>(size);
+		int capacity = newCapacity();
+		SimpleIntMap<T> h = new SimpleIntMap<>(capacity);
 		for (int i = 0; i < keys.length; i++) {
 			if (keys[i] != EMPTY) {
 				h.put(keys[i], values[i]);
