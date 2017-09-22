@@ -143,7 +143,10 @@ public class LL1Analyzer {
 						 boolean seeThruPreds, boolean addEOF)
 	{
 //		System.out.println("_LOOK("+s.stateNumber+", ctx="+ctx);
-        ATNConfig c = new ATNConfig(s, 0, ctx);
+        ATNConfig c = ATNConfig.newBuilder()
+						.setState(s)
+						.setPredictionContext(ctx)
+						.setAlt(0).build();
         if ( !lookBusy.add(c) ) return;
 
 		if (s == stopState) {

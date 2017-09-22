@@ -61,67 +61,120 @@ public class ATNConfig {
 	 */
 	public int reachesIntoOuterContext;
 
+  public final SemanticContext semanticContext;
 
-    public final SemanticContext semanticContext;
-
-	public ATNConfig(ATNConfig old) { // dup
-		this.state = old.state;
-		this.alt = old.alt;
-		this.context = old.context;
-		this.semanticContext = old.semanticContext;
-		this.reachesIntoOuterContext = old.reachesIntoOuterContext;
+	public static Builder newBuilder(ATNConfig config) {
+  	 return new Builder(config);
 	}
 
-	public ATNConfig(ATNState state,
-					 int alt,
-					 PredictionContext context)
-	{
-		this(state, alt, context, SemanticContext.NONE);
+	public static Builder newBuilder() {
+  	return new Builder();
 	}
 
-	public ATNConfig(ATNState state,
-					 int alt,
-					 PredictionContext context,
-					 SemanticContext semanticContext)
-	{
+  public static class Builder {
+		private ATNState state;
+		private int alt;
+		private PredictionContext predictionContext;
+		private int reachesIntoOuterContext;
+		private SemanticContext semanticContext;
+
+		Builder() {	}
+
+		Builder(ATNConfig config) {
+			this.alt = config.alt;
+			this.reachesIntoOuterContext = config.reachesIntoOuterContext;
+		}
+
+		Builder setState(ATNState state) {
+			this.state = state;
+			return this;
+		}
+
+		Builder setAlt(int alt) {
+			this.alt = alt;
+			return this;
+		}
+
+		Builder setSemanticContext(SemanticContext semanticContext) {
+			this.semanticContext = semanticContext;
+			return this;
+		}
+
+		Builder setPredictionContext(PredictionContext predictionContext) {
+			this.predictionContext = predictionContext;
+			return this;
+		}
+
+		ATNConfig build() {
+			return new ATNConfig(state, alt, predictionContext, reachesIntoOuterContext, semanticContext);
+		}
+	}
+
+  // For convenience.
+	public ATNConfig(ATNConfig config, ATNState state) {
+  	this(state, config.alt, config.context, config.reachesIntoOuterContext, config.semanticContext);
+	}
+
+  protected ATNConfig(ATNState state,
+			int alt,
+			PredictionContext context,
+			int reachesIntoOuterContext,
+			SemanticContext semanticContext) {
 		this.state = state;
 		this.alt = alt;
 		this.context = context;
 		this.semanticContext = semanticContext;
+		this.reachesIntoOuterContext = reachesIntoOuterContext;
 	}
 
-    public ATNConfig(ATNConfig c, ATNState state) {
-   		this(c, state, c.context, c.semanticContext);
-   	}
-
-	public ATNConfig(ATNConfig c, ATNState state,
-		 SemanticContext semanticContext)
-{
-		this(c, state, c.context, semanticContext);
-	}
-
-	public ATNConfig(ATNConfig c,
-					 SemanticContext semanticContext)
-	{
-		this(c, c.state, c.context, semanticContext);
-	}
-
-    public ATNConfig(ATNConfig c, ATNState state,
-					 PredictionContext context)
-	{
-        this(c, state, context, c.semanticContext);
-    }
-
-	public ATNConfig(ATNConfig c, ATNState state,
-					 PredictionContext context,
-                     SemanticContext semanticContext)
-    {
-		this.state = state;
-		this.alt = c.alt;
-		this.context = context;
-		this.semanticContext = semanticContext;
-		this.reachesIntoOuterContext = c.reachesIntoOuterContext;
-	}
+//	public ATNConfig(ATNConfig old) { // dup
+//		this.state = old.state;
+//		this.alt = old.alt;
+//		this.context = old.context;
+//		this.semanticContext = old.semanticContext;
+//		this.reachesIntoOuterContext = old.reachesIntoOuterContext;
+//	}
+//
+//	public ATNConfig(ATNState state, int alt, PredictionContext context)	{
+//		this(state, alt, context, SemanticContext.NONE);
+//	}
+//
+//	public ATNConfig(ATNState state,
+//			int alt,
+//			PredictionContext context,
+//			SemanticContext semanticContext)	{
+//		this.state = state;
+//		this.alt = alt;
+//		this.context = context;
+//		this.semanticContext = semanticContext;
+//	}
+//
+//  public ATNConfig(ATNConfig c, ATNState state) {
+// 		this(c, state, c.context, c.semanticContext);
+// 	}
+//
+//	public ATNConfig(ATNConfig c, ATNState state, SemanticContext semanticContext) {
+//		this(c, state, c.context, semanticContext);
+//	}
+//
+//	public ATNConfig(ATNConfig c, SemanticContext semanticContext) {
+//		this(c, c.state, c.context, semanticContext);
+//	}
+//
+//	public ATNConfig(ATNConfig c, ATNState state, PredictionContext context) {
+//		this(c, state, context, c.semanticContext);
+//	}
+//
+//	public ATNConfig(ATNConfig c,
+//			ATNState state,
+//			PredictionContext context,
+//      SemanticContext semanticContext) {
+//		this.state = state;
+//		this.alt = c.alt;
+//		this.context = context;
+//		this.semanticContext = semanticContext;
+//		this.reachesIntoOuterContext = c.reachesIntoOuterContext;
+//	}
 
 	/**
 	 * This method gets the value of the {@link #reachesIntoOuterContext} field

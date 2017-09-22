@@ -19,40 +19,27 @@ public class LexerATNConfig extends ATNConfig {
 
 	public LexerATNConfig(ATNState state,
 						  int alt,
-						  PredictionContext context)
-	{
-		super(state, alt, context, SemanticContext.NONE);
+						  PredictionContext predictionContext){
+		super(state, alt, predictionContext, 0, SemanticContext.NONE);
 		this.passedThroughNonGreedyDecision = false;
 		this.lexerActionExecutor = null;
 	}
 
-	public LexerATNConfig(ATNState state,
-						  int alt,
-						  PredictionContext context,
-						  LexerActionExecutor lexerActionExecutor)
-	{
-		super(state, alt, context, SemanticContext.NONE);
-		this.lexerActionExecutor = lexerActionExecutor;
-		this.passedThroughNonGreedyDecision = false;
-	}
-
 	public LexerATNConfig(LexerATNConfig c, ATNState state) {
-		super(c, state, c.context, c.semanticContext);
+		super(c, state);
 		this.lexerActionExecutor = c.lexerActionExecutor;
 		this.passedThroughNonGreedyDecision = checkNonGreedyDecision(c, state);
 	}
 
 	public LexerATNConfig(LexerATNConfig c, ATNState state,
-						  LexerActionExecutor lexerActionExecutor)
-	{
-		super(c, state, c.context, c.semanticContext);
+						  LexerActionExecutor lexerActionExecutor) {
+		super(c, state);
 		this.lexerActionExecutor = lexerActionExecutor;
 		this.passedThroughNonGreedyDecision = checkNonGreedyDecision(c, state);
 	}
 
-	public LexerATNConfig(LexerATNConfig c, ATNState state,
-						  PredictionContext context) {
-		super(c, state, context, c.semanticContext);
+	public LexerATNConfig(LexerATNConfig c, ATNState state, PredictionContext context) {
+		super(state, c.alt, context, c.reachesIntoOuterContext, SemanticContext.NONE);
 		this.lexerActionExecutor = c.lexerActionExecutor;
 		this.passedThroughNonGreedyDecision = checkNonGreedyDecision(c, state);
 	}

@@ -807,7 +807,9 @@ public class ParserATNSimulator extends ATNSimulator {
 				Transition trans = c.state.transition(ti);
 				ATNState target = getReachableTarget(trans, t);
 				if ( target!=null ) {
-					intermediate.add(new ATNConfig(c, target), mergeCache);
+					intermediate.add(ATNConfig.newBuilder(c)
+							.setState(target)
+							.build(), mergeCache);
 				}
 			}
 		}
@@ -947,7 +949,11 @@ public class ParserATNSimulator extends ATNSimulator {
 
 		for (int i=0; i<p.getNumberOfTransitions(); i++) {
 			ATNState target = p.transition(i).target;
-			ATNConfig c = new ATNConfig(target, i+1, initialContext);
+			ATNConfig c = ATNConfig.newBuilder()
+					.setState(target)
+					.setAlt(i+1)
+					.setPredictionContext(initialContext)
+					.build();
 			Set<ATNConfig> closureBusy = new HashSet<ATNConfig>();
 			closure(c, configs, closureBusy, true, fullCtx, false);
 		}
@@ -1135,7 +1141,9 @@ public class ParserATNSimulator extends ATNSimulator {
 
 			statesFromAlt1.put(config.state.stateNumber, config.context);
 			if (updatedContext != config.semanticContext) {
-				configSet.add(new ATNConfig(config, updatedContext), mergeCache);
+				configSet.add(ATNConfig.newBuilder(config)
+						.setSemanticContext(updatedContext)
+						.build(), mergeCache);
 			}
 			else {
 				configSet.add(config, mergeCache);
@@ -1463,7 +1471,7 @@ public class ParserATNSimulator extends ATNSimulator {
 				for (int i = 0; i < config.context.size(); i++) {
 					if ( config.context.getReturnState(i)==PredictionContext.EMPTY_RETURN_STATE ) {
 						if (fullCtx) {
-							configs.add(new ATNConfig(config, config.state, PredictionContext.EMPTY), mergeCache);
+							configs.add(ATNConfig.newBuilder(config).setState(config.state).setPredictionContext(PredictionContext.EMPTY).build(), mergeCache);
 							continue;
 						}
 						else {
@@ -1477,8 +1485,10 @@ public class ParserATNSimulator extends ATNSimulator {
 					}
 					ATNState returnState = atn.states.get(config.context.getReturnState(i));
 					PredictionContext newContext = config.context.getParent(i); // "pop" return state
-					ATNConfig c = new ATNConfig(returnState, config.alt, newContext,
-												config.semanticContext);
+					ATNConfig c = ATNConfig.newBuilder(config)
+							.setState(returnState)
+							.setPredictionContext(newContext)
+							.build();
 					// While we have context to pop back from, we may have
 					// gotten that context AFTER having falling off a rule.
 					// Make sure we track that we are now out of context.
@@ -1832,7 +1842,10 @@ public class ParserATNSimulator extends ATNSimulator {
 			else {
 				SemanticContext newSemCtx =
 					SemanticContext.and(config.semanticContext, pt.getPredicate());
-				c = new ATNConfig(config, pt.target, newSemCtx);
+				c = ATNConfig.newBuilder(config)
+						.setState(pt.target)
+						.setSemanticContext(newSemCtx)
+						.build();
 			}
         }
 		else {
@@ -1880,7 +1893,10 @@ public class ParserATNSimulator extends ATNSimulator {
 			else {
 				SemanticContext newSemCtx =
 					SemanticContext.and(config.semanticContext, pt.getPredicate());
-				c = new ATNConfig(config, pt.target, newSemCtx);
+				c = ATNConfig.newBuilder(config)
+						.setState(pt.target)
+						.setSemanticContext(newSemCtx)
+						.build();
 			}
 		}
 		else {
@@ -1901,7 +1917,10 @@ public class ParserATNSimulator extends ATNSimulator {
 		ATNState returnState = t.followState;
 		PredictionContext newContext =
 			SingletonPredictionContext.create(config.context, returnState.stateNumber);
-		return new ATNConfig(config, t.target, newContext);
+		return ATNConfig.newBuilder(config)
+				.setState(t.target)
+				.setPredictionContext(newContext)
+				.build();
 	}
 
 	/**
