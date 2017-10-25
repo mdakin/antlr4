@@ -12,5 +12,7 @@ public interface EdgeCache<T> {
 
 	int[] getKeys();
 
+	T[] getValues();
+
 	EdgeCache<T> expand();
 }

@@ -3,6 +3,7 @@ package org.antlr.v4.runtime.misc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.antlr.v4.runtime.dfa.DFAState;
 
 /**
  * A simple hashmap with integer keys and T values.
@@ -158,21 +159,21 @@ public final class SymbolMap<T> implements EdgeCache<T> {
 				keyArray[c++] = key;
 			}
 		}
-		Arrays.sort(keyArray);
 		return keyArray;
 	}
 
 	/**
 	 * @return The array of keys in the map. Sorted ascending.
 	 */
-	public List<T> getValues() {
-		List<T> result = new ArrayList<>();
-		for (int i = 0; i < keys.length; i++) {
-			if (keys[i] >= 0) {
-				result.add(values[i]);
+	@SuppressWarnings("unchecked")
+	public T[] getValues() {
+		T[] valueArray = (T[]) new Object[keyCount];
+		for (int i = 0, j = 0; i < keys.length; i++) {
+			if (keys[i] != EMPTY) {
+				valueArray[j++] = values[i];
 			}
 		}
-		return result;
+		return valueArray;
 	}
 
 	private int locate(int key) {

@@ -1,15 +1,13 @@
 package org.antlr.v4.runtime.misc;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import org.antlr.v4.runtime.dfa.DFAState;
 
 public class DFAEdgeCache {
 
-	private static final int DEFAULT_INITIAL_CAPACITY = 4;
+	private static final int DEFAULT_INITIAL_CAPACITY = 2;
 
-	private static final int DEFAULT_MAX_CAPACITY = 1 << 8;
+	private static final int DEFAULT_MAX_CAPACITY = 1 << 7;
 
 	private static final int CAPACITY_LIMIT = 1 << 29;
 
@@ -18,8 +16,10 @@ public class DFAEdgeCache {
 
 	// volatile guarantees atomic reference copy.
 	// Initial map is the perfect map that expands in case of a collision.
-  // If it reaches to a certain size, it is replaced with a int map that only grows
-	// when its size reaches to a certain threshold.
+  // If it reaches to a certain size, it is replaced with normal int map that only grows
+	// when its size reaches to a certain threshold. This map uses linear probing and
+	// expands only size reaches to a certain threshold, until capacity reaches to CAPACITY_LIMIT
+	// after that it throws.
 	private volatile EdgeCache<DFAState> edgeMap;
 
 	public DFAEdgeCache() {
@@ -38,13 +38,13 @@ public class DFAEdgeCache {
 		while(!edgeMap.put(symbol, state)) {
   		EdgeCache<DFAState> newMap = edgeMap.expand();
 			// If we fail to insert even if we expand, we switch to use a (non perfect) hashmap.
-			// This wil happen only in case of the PerfectMap version which has a small max
-			// capacity limit.
-			// SymbolMap uses linear probing and expands until capacity reaches to 1<<29, then throws.
 			if (edgeMap == newMap) {
-				// System.out.println("Switching to intmap");
 				newMap = new SymbolMap<>(edgeMap.size());
-				// Fill the new map here.
+				int[] keys = edgeMap.getKeys();
+				Object[] values = edgeMap.getValues();
+				for (int i=0; i<keys.length; i++) {
+					newMap.put(keys[i], (DFAState)values[i]);
+				}
 			}
 			// Replace the map with new version.
 			edgeMap = newMap;
@@ -67,13 +67,11 @@ public class DFAEdgeCache {
 
 	/**
 	 * A small map with int keys. Properties:
-	 * - get does at most 2 lookups. (Allows a single collision)
-	 * - Does not guarantee adding a key-value, if key > MAX_CAPACITY.
+	 * - get is always a single lookup.
+	 * - put may fail.
 	 * - Is not thread safe
-	 * - Does not support deletion
-	 *
 	 */
-	final class TinyPerfectMap<T> implements EdgeCache<T>{
+	final static private class TinyPerfectMap<T> implements EdgeCache<T>{
 		// Backing arrays for keys and value references.
 		private int[] keys;
 		private T[] values;
@@ -170,10 +168,7 @@ public class DFAEdgeCache {
 		public T get(int key) {
 			checkKey(key);
 			final int loc = key & modulo;
-			if (keys[loc] == key) {
-				return values[loc];
-			}
-			return null;
+			return keys[loc] == key ?  values[loc] : null;
 		}
 
 		public boolean containsKey(int key) {
@@ -181,7 +176,7 @@ public class DFAEdgeCache {
 		}
 
 		/**
-		 * @return The array of keys in the map. Sorted ascending.
+		 * @return The array of keys in the map.
 		 */
 		public int[] getKeys() {
 			int[] keyArray = new int[keyCount];
@@ -191,21 +186,21 @@ public class DFAEdgeCache {
 					keyArray[c++] = key;
 				}
 			}
-			Arrays.sort(keyArray);
 			return keyArray;
 		}
 
 		/**
-		 * @return The array of keys in the map. Sorted ascending.
+		 * @return The array of keys in the map.
 		 */
-		public List<T> getValues() {
-			List<T> result = new ArrayList<>();
-			for (int i = 0; i < keys.length; i++) {
-				if (keys[i] >= 0) {
-					result.add(values[i]);
+		@SuppressWarnings("unchecked")
+		public T[] getValues() {
+			T[] valueArray = (T[]) new Object[keyCount];
+			for (int i = 0, j = 0; i < keys.length; i++) {
+				if (keys[i] != EMPTY) {
+					valueArray[j++] = values[i];
 				}
 			}
-			return result;
+			return valueArray;
 		}
 
 		/**
@@ -213,11 +208,11 @@ public class DFAEdgeCache {
 		 */
 		public EdgeCache<T> expand() {
 			TinyPerfectMap<T> newMap = this;
-			// Expand the map until there are no collisions. Or capacity reaches to MAX_CAPACITY
+			// Expand the map until there are no collisions. Or capacity reaches to maxCapacity.
 			int capacity = keys.length;
-			boolean allfit = false;
+			boolean allFits = false;
 			expandAgain:
-			while (!allfit && capacity <= maxCapacity) {
+			while (!allFits && capacity <= maxCapacity) {
 				capacity = capacity * 2;
 				newMap = new TinyPerfectMap<>(capacity, maxCapacity);
 				// Try to insert all key-values into new array
@@ -229,9 +224,9 @@ public class DFAEdgeCache {
 						}
 					}
 				}
-				allfit = true;
+				allFits = true;
 			}
-			return allfit ? newMap : this;
+			return allFits ? newMap : this;
 		}
 
 	}
