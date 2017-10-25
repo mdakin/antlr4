@@ -6,17 +6,17 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.antlr.v4.runtime.misc.SimpleIntMap;
+import org.antlr.v4.runtime.misc.SymbolMap;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestSimpleIntMap {
+public class TestSymbolMap {
 
   @Test
   public void initializesCorrectly() {
     // Check first 1K initial sizes.
     for (int i=1; i < 1000; i++ ) {
-      SimpleIntMap<String> im = new SimpleIntMap<>(i);
+      SymbolMap<String> im = new SymbolMap<>(i);
       checkSize(im, 0);
     }
   }
@@ -24,12 +24,12 @@ public class TestSimpleIntMap {
   @Test
   public void failsOnInvalidSizes() {
     try {
-      SimpleIntMap<String> im;
-      im = new SimpleIntMap<>(0);
-      im = new SimpleIntMap<>(-1);
-      im = new SimpleIntMap<>(Integer.MAX_VALUE);
-      im = new SimpleIntMap<>(Integer.MIN_VALUE);
-      im = new SimpleIntMap<>(1 << 29 + 1);
+      SymbolMap<String> im;
+      im = new SymbolMap<>(0);
+      im = new SymbolMap<>(-1);
+      im = new SymbolMap<>(Integer.MAX_VALUE);
+      im = new SymbolMap<>(Integer.MIN_VALUE);
+      im = new SymbolMap<>(1 << 29 + 1);
       Assert.fail("Illegal size should have thrown an exception.");
     } catch (RuntimeException e) {
       // Nothing to do
@@ -40,7 +40,7 @@ public class TestSimpleIntMap {
   public void expandsCorrectly() {
     // Create maps with different sizes and add size * 10 elements to each.
     for (int i=1; i < 100; i++ ) {
-      SimpleIntMap<String> im = new SimpleIntMap<>(i);
+      SymbolMap<String> im = new SymbolMap<>(i);
       // Insert i * 10 elements to each and confirm sizes
       int elements = i * 10;
       for (int j=0; j< elements; j++) {
@@ -57,11 +57,11 @@ public class TestSimpleIntMap {
   public void putAddsAndUpdatesElementsCorrectly() {
     int span = 100;
     for (int i=0; i<span; i++) {
-      SimpleIntMap<String> im = new SimpleIntMap<>();
+      SymbolMap<String> im = new SymbolMap<>();
       checkSpanInsertions(im, -i, i);
     }
     // Do the same, this time overwrite values as well
-    SimpleIntMap<String> im = new SimpleIntMap<>();
+    SymbolMap<String> im = new SymbolMap<>();
     for (int i=0; i<span; i++) {
       checkSpanInsertions(im, -i, i);
       checkSpanInsertions(im, -i, i);
@@ -73,14 +73,14 @@ public class TestSimpleIntMap {
   public void survivesSimpleFuzzing() {
 		List<int[]> fuzzLists = createFuzzingLists();
     for (int[] arr : fuzzLists) {
-      SimpleIntMap<String> im = new SimpleIntMap<>();
+      SymbolMap<String> im = new SymbolMap<>();
       for (int i=0; i<arr.length; i++) {
         im.put(arr[i], "" + arr[i]);
         assertEquals(im.get(arr[i]), "" + arr[i]);
       }
     }
 
-    SimpleIntMap<String> im = new SimpleIntMap<>();
+    SymbolMap<String> im = new SymbolMap<>();
     for (int[] arr : fuzzLists) {
       for (int i=0; i<arr.length; i++) {
         im.put(arr[i], "" + arr[i]);
@@ -127,7 +127,7 @@ public class TestSimpleIntMap {
     return fuzzLists;
   }
 
-  private void checkSpanInsertions(SimpleIntMap<String> im, int start, int end) {
+  private void checkSpanInsertions(SymbolMap<String> im, int start, int end) {
     insertSpan(im, start, end);
     // Expected size.
     int size = Math.abs(start) + Math.abs(end) + 1;
@@ -135,7 +135,7 @@ public class TestSimpleIntMap {
     checkSpan(im, start, end);
   }
 
-  private void insertSpan(SimpleIntMap<String> im, int start, int end) {
+  private void insertSpan(SymbolMap<String> im, int start, int end) {
     int spanStart = Math.min(start, end);
     int spanEnd = Math.max(start, end);
     for (int i = spanStart; i <= spanEnd; i++) {
@@ -143,7 +143,7 @@ public class TestSimpleIntMap {
     }
   }
 
-  private void checkSpan(SimpleIntMap<String> im, int start, int end) {
+  private void checkSpan(SymbolMap<String> im, int start, int end) {
     int spanStart = Math.min(start, end);
     int spanEnd = Math.max(start, end);
     for (int i = spanStart; i <= spanEnd; i++) {
@@ -158,7 +158,7 @@ public class TestSimpleIntMap {
     }
   }
 
-	private void checkSize(SimpleIntMap<String> m, int size) {
+	private void checkSize(SymbolMap<String> m, int size) {
 		assertEquals(size, m.size());
 		assertTrue(m.capacity() > m.size());
 		// Check capacity is 2^n

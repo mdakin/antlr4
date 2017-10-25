@@ -16,7 +16,7 @@ import java.util.List;
  * - Does not implement Iterable.
  * - Class is not thread safe.
  */
-public final class SimpleIntMap<T> {
+public final class SymbolMap<T> {
 
 	private static final int DEFAULT_INITIAL_CAPACITY = 4;
 	/**
@@ -47,7 +47,7 @@ public final class SimpleIntMap<T> {
 	 */
 	private int modulo;
 
-	public SimpleIntMap() {
+	public SymbolMap() {
 		this(DEFAULT_INITIAL_CAPACITY);
 	}
 
@@ -57,7 +57,7 @@ public final class SimpleIntMap<T> {
 	 * larger power of two.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleIntMap(int capacity) {
+	public SymbolMap(int capacity) {
 		capacity = adjustInitialSize(capacity) ;
 		keys = new int[capacity];
 		values = (T[]) new Object[keys.length];
@@ -86,6 +86,11 @@ public final class SimpleIntMap<T> {
 
 	public int size() {
 		return keyCount;
+	}
+
+	private int hash2(int x) {
+		final int h = x * 0x9E3779B9; // int phi
+		return (h ^ (h >> 16)) & modulo;
 	}
 
 	private void checkKey(int key) {
@@ -118,8 +123,12 @@ public final class SimpleIntMap<T> {
 	 */
 	public T get(int key) {
 		checkKey(key);
-		final int slot = key & modulo;
-		return key == keys[slot] ? values[slot] : linearProbe(slot, key);
+		int slot = key & modulo;
+		if (key == keys[slot]) return values[slot];
+		if (key == EMPTY) return null;
+		slot = hash2(key);
+		if (key == keys[slot]) return values[slot];
+		return linearProbe(slot, key);
 	}
 
 	private T linearProbe(int slot, int key) {
@@ -169,8 +178,16 @@ public final class SimpleIntMap<T> {
 
 	private int locate(int key) {
 		int slot = key & modulo;
+		int k = keys[slot];
+		if (k == EMPTY) {
+			return -slot - 1;
+		}
+		if (k == key) {
+			return slot;
+		}
+		slot = hash2(key);
 		while (true) {
-			final int k = keys[slot];
+			k = keys[slot];
 			// If slot is empty, return its location
 			if (k == EMPTY) {
 				return -slot - 1;
@@ -195,7 +212,7 @@ public final class SimpleIntMap<T> {
 	 */
 	private void expand() {
 		int capacity = newCapacity();
-		SimpleIntMap<T> h = new SimpleIntMap<>(capacity);
+		SymbolMap<T> h = new SymbolMap<>(capacity);
 		for (int i = 0; i < keys.length; i++) {
 			if (keys[i] != EMPTY) {
 				h.put(keys[i], values[i]);

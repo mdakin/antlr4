@@ -13,7 +13,7 @@ import org.antlr.v4.runtime.atn.LexerActionExecutor;
 import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.SemanticContext;
 import org.antlr.v4.runtime.misc.MurmurHash;
-import org.antlr.v4.runtime.misc.SimpleIntMap;
+import org.antlr.v4.runtime.misc.SymbolMap;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -54,7 +54,7 @@ public class DFAState {
 	 * Edges points to a target State for a symbol.
 	 * This map represents all edges from this state to all connected states.
  	 */
-	private final SimpleIntMap<DFAState> edges = new SimpleIntMap<>(2);
+	private final SymbolMap<DFAState> edges = new SymbolMap<>(2);
 
 	public boolean isAcceptState = false;
 
