@@ -16,7 +16,7 @@ import java.util.List;
  * - Does not implement Iterable.
  * - Class is not thread safe.
  */
-public final class SymbolMap<T> {
+public final class SymbolMap<T> implements EdgeCache<T> {
 
 	private static final int DEFAULT_INITIAL_CAPACITY = 4;
 	/**
@@ -88,10 +88,10 @@ public final class SymbolMap<T> {
 		return keyCount;
 	}
 
-	private int hash2(int x) {
-		final int h = x * 0x9E3779B9; // int phi
-		return (h ^ (h >> 16)) & modulo;
-	}
+	// private int hash2(int x) {
+	// 	final int h = x * 0x9E3779B9; // int phi
+	// 	return (h ^ (h >> 16)) & modulo;
+	// }
 
 	private void checkKey(int key) {
 		if (key == EMPTY) {
@@ -99,10 +99,11 @@ public final class SymbolMap<T> {
 		}
 	}
 
-	public void put(int key, T value) {
+	public boolean put(int key, T value) {
 		checkKey(key);
 		if (keyCount == threshold) {
-			expand();
+			// Caller should create a new version with expanded capacity.
+			return false;
 		}
 		int loc = locate(key);
 		if (loc >= 0) {
@@ -113,6 +114,7 @@ public final class SymbolMap<T> {
 			values[loc] = value;
 			keyCount++;
 		}
+		return true;
 	}
 
 	/**
@@ -124,9 +126,6 @@ public final class SymbolMap<T> {
 	public T get(int key) {
 		checkKey(key);
 		int slot = key & modulo;
-		if (key == keys[slot]) return values[slot];
-		if (key == EMPTY) return null;
-		slot = hash2(key);
 		if (key == keys[slot]) return values[slot];
 		return linearProbe(slot, key);
 	}
@@ -178,16 +177,8 @@ public final class SymbolMap<T> {
 
 	private int locate(int key) {
 		int slot = key & modulo;
-		int k = keys[slot];
-		if (k == EMPTY) {
-			return -slot - 1;
-		}
-		if (k == key) {
-			return slot;
-		}
-		slot = hash2(key);
 		while (true) {
-			k = keys[slot];
+			int k = keys[slot];
 			// If slot is empty, return its location
 			if (k == EMPTY) {
 				return -slot - 1;
@@ -210,17 +201,14 @@ public final class SymbolMap<T> {
 	/**
 	 * Expands backing arrays by doubling their capacity.
 	 */
-	private void expand() {
+	public EdgeCache<T> expand() {
 		int capacity = newCapacity();
-		SymbolMap<T> h = new SymbolMap<>(capacity);
+		SymbolMap<T> newMap = new SymbolMap<>(capacity);
 		for (int i = 0; i < keys.length; i++) {
 			if (keys[i] != EMPTY) {
-				h.put(keys[i], values[i]);
+				newMap.put(keys[i], values[i]);
 			}
 		}
-		this.keys = h.keys;
-		this.values = h.values;
-		this.threshold = h.threshold;
-		this.modulo = h.modulo;
+		return newMap;
 	}
 }

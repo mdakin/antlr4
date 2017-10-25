@@ -5,11 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 import org.antlr.v4.runtime.dfa.DFAState;
 
-public class DFAStateEdgeCache {
+public class DFAEdgeCache {
 
 	private static final int DEFAULT_INITIAL_CAPACITY = 4;
 
-	private static final int DEFAULT_MAX_CAPACITY = 1 << 9;
+	private static final int DEFAULT_MAX_CAPACITY = 1 << 8;
 
 	private static final int CAPACITY_LIMIT = 1 << 29;
 
@@ -17,31 +17,37 @@ public class DFAStateEdgeCache {
 	private static final int EMPTY = Integer.MIN_VALUE;
 
 	// volatile guarantees atomic reference copy.
-	private volatile TinyPerfectMap<DFAState> edgeMap;
+	// Initial map is the perfect map that expands in case of a collision.
+  // If it reaches to a certain size, it is replaced with a int map that only grows
+	// when its size reaches to a certain threshold.
+	private volatile EdgeCache<DFAState> edgeMap;
 
-	public DFAStateEdgeCache() {
-		this(DEFAULT_INITIAL_CAPACITY);
+	public DFAEdgeCache() {
+		this(DEFAULT_INITIAL_CAPACITY, DEFAULT_MAX_CAPACITY);
 	}
 
-	public DFAStateEdgeCache(int initialCapacity) {
-		edgeMap = new TinyPerfectMap<DFAState>(initialCapacity, DEFAULT_MAX_CAPACITY);
+	public DFAEdgeCache(int initialCapacity) {
+		this(initialCapacity, DEFAULT_MAX_CAPACITY);
 	}
 
-	public DFAStateEdgeCache(int initialCapacity, int maxCapacity) {
-		edgeMap = new TinyPerfectMap<DFAState>(initialCapacity, maxCapacity);
+	public DFAEdgeCache(int initialCapacity, int maxCapacity) {
+		edgeMap = new TinyPerfectMap<>(initialCapacity, maxCapacity);
 	}
 
-	public synchronized boolean addEdge(int symbol, DFAState state) {
-		while(true) {
-			if (!edgeMap.put(symbol, state)) {
-				TinyPerfectMap<DFAState> newMap = edgeMap.expand();
-				// Fail if can not expand anymore.
-				if (edgeMap == newMap) {
-					return false;
-				}
-				// Replace the map with new version.
-				edgeMap = newMap;
+	public synchronized void addEdge(int symbol, DFAState state) {
+		while(!edgeMap.put(symbol, state)) {
+  		EdgeCache<DFAState> newMap = edgeMap.expand();
+			// If we fail to insert even if we expand, we switch to use a (non perfect) hashmap.
+			// This wil happen only in case of the PerfectMap version which has a small max
+			// capacity limit.
+			// SymbolMap uses linear probing and expands until capacity reaches to 1<<29, then throws.
+			if (edgeMap == newMap) {
+				// System.out.println("Switching to intmap");
+				newMap = new SymbolMap<>(edgeMap.size());
+				// Fill the new map here.
 			}
+			// Replace the map with new version.
+			edgeMap = newMap;
 		}
 	}
 
@@ -57,6 +63,8 @@ public class DFAStateEdgeCache {
 		return edgeMap.capacity();
 	}
 
+	public int[] getKeys() {return edgeMap.getKeys();}
+
 	/**
 	 * A small map with int keys. Properties:
 	 * - get does at most 2 lookups. (Allows a single collision)
@@ -65,7 +73,7 @@ public class DFAStateEdgeCache {
 	 * - Does not support deletion
 	 *
 	 */
-	final class TinyPerfectMap<T> {
+	final class TinyPerfectMap<T> implements EdgeCache<T>{
 		// Backing arrays for keys and value references.
 		private int[] keys;
 		private T[] values;
@@ -123,43 +131,20 @@ public class DFAStateEdgeCache {
 			return keyCount;
 		}
 
+		private int hash(int x) {
+			final int h = x * 0x9E3779B9; // int phi
+			return (h ^ (h >> 16)) & modulo;
+		}
+
 		private void checkKey(int key) {
 			if (key == EMPTY) {
 				throw new IllegalArgumentException("Illegal key: " + key);
 			}
 		}
 
-		private int hash1(int key) {
-			return key & modulo;
-		}
-
-		private int hash2(int x) {
-			final int h = x * 0x9E3779B9; // int phi
-			return (h ^ (h >> 16)) & modulo;
-		}
-
-		public boolean put(int key, T value) {
+  	public boolean put(int key, T value) {
 			checkKey(key);
-			// First hash is the directly key % capacity, for key space with a bounded upper limit
-			// This guarantees capacity will be at most the first 2^n bigger than the limit. e.g.
-			// For ascii input (0..127), this guarantees capacity will be maximum 256 and all keys
-			// will fit and can be reached with a single lookup.
-			int loc = hash1(key);
-			if (putOrUpdate(loc, key, value)) {
-				return true;
-			}
-			// If we fail to put the element with first hash, we try a different hash. This
-			// provides a second chance to put a key if there is a collision, especially
-			// if key space upper limit is a large value (e.g. non ascii input)
-			int loc2 = hash2(key);
-			if (putOrUpdate(loc2, key, value)) {
-				return true;
-			}
-			// Could not insert key, value.
-			return false;
-		}
-
-		private boolean putOrUpdate(int loc, int key, T value) {
+			int loc = key & modulo;
 			// If slot is empty, just put the value
 			if (keys[loc] == EMPTY) {
 				keys[loc] = key;
@@ -172,7 +157,7 @@ public class DFAStateEdgeCache {
 				values[loc] = value;
 				return true;
 			}
-			// Could not put ot update.
+			// Put failed.
 			return false;
 		}
 
@@ -184,17 +169,9 @@ public class DFAStateEdgeCache {
 		 */
 		public T get(int key) {
 			checkKey(key);
-			int loc = hash1(key);
+			final int loc = key & modulo;
 			if (keys[loc] == key) {
 				return values[loc];
-			}
-			if (keys[loc] == EMPTY) {
-				return  null;
-			}
-			// first lookup failed with collision, try again with a different hash.
-			loc = hash2(key);
-			if (keys[loc] == key) {
-  			return values[loc];
 			}
 			return null;
 		}
@@ -234,16 +211,14 @@ public class DFAStateEdgeCache {
 		/**
 		 * Try to create a new map with double capacity.
 		 */
-		private TinyPerfectMap<T> expand() {
+		public EdgeCache<T> expand() {
 			TinyPerfectMap<T> newMap = this;
-			int capacity = keys.length * 2;
-			if (capacity > maxCapacity) {
-				return this;
-			}
-			boolean allFit = false;
 			// Expand the map until there are no collisions. Or capacity reaches to MAX_CAPACITY
+			int capacity = keys.length;
+			boolean allfit = false;
 			expandAgain:
-			while(capacity <= maxCapacity) {
+			while (!allfit && capacity <= maxCapacity) {
+				capacity = capacity * 2;
 				newMap = new TinyPerfectMap<>(capacity, maxCapacity);
 				// Try to insert all key-values into new array
 				for (int i = 0; i < keys.length; i++) {
@@ -254,24 +229,11 @@ public class DFAStateEdgeCache {
 						}
 					}
 				}
-				allFit = true;
+				allfit = true;
 			}
-			// We can not fit all elements into new map, try to put all existing values, starting with
-			// elements with small key values
-			if (!allFit) {
-				// First fill the map with keys < capacity, giving precedence to smaller keys.
-				for (int i = 0; i < keys.length; i++) {
-					if (keys[i] != EMPTY && keys[i] < keys.length) {
-						 newMap.put(keys[i], values[i]);
-					}
-				}
-				// Then try to put remaining keys, ignore failures.
-				for (int i = 0; i < keys.length; i++) {
-  				newMap.put(keys[i], values[i]);
-				}
-			}
-			return newMap;
+			return allfit ? newMap : this;
 		}
 
 	}
+
 }

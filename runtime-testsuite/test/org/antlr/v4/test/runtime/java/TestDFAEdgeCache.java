@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
-import org.antlr.v4.runtime.misc.DFAStateEdgeCache;
+import org.antlr.v4.runtime.misc.DFAEdgeCache;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,7 +14,7 @@ public class TestDFAEdgeCache {
   public void initializesCorrectly() {
     // Check first 1K initial sizes.
     for (int i=1; i < 1000; i++ ) {
-			DFAStateEdgeCache c = new DFAStateEdgeCache(i);
+			DFAEdgeCache c = new DFAEdgeCache(i);
       checkSize(c, 0);
     }
   }
@@ -22,11 +22,11 @@ public class TestDFAEdgeCache {
   @Test
   public void failsOnInvalidSizes() {
     try {
-      DFAStateEdgeCache c;
-      c = new DFAStateEdgeCache(0);
-      c = new DFAStateEdgeCache(-1);
-      c = new DFAStateEdgeCache(Integer.MAX_VALUE);
-      c = new DFAStateEdgeCache(Integer.MIN_VALUE);
+      DFAEdgeCache c;
+      c = new DFAEdgeCache(0);
+      c = new DFAEdgeCache(-1);
+      c = new DFAEdgeCache(Integer.MAX_VALUE);
+      c = new DFAEdgeCache(Integer.MIN_VALUE);
       Assert.fail("Illegal size should have thrown an exception.");
     } catch (RuntimeException e) {
       // Nothing to do
@@ -156,7 +156,7 @@ public class TestDFAEdgeCache {
   // }
   //
 
-	private void checkSize(DFAStateEdgeCache m, int size) {
+	private void checkSize(DFAEdgeCache m, int size) {
 		assertEquals(size, m.size());
 		assertTrue(m.capacity() > m.size());
 		// Check capacity is 2^n

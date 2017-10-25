@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.atn.ATNConfigSet;
 import org.antlr.v4.runtime.atn.LexerActionExecutor;
 import org.antlr.v4.runtime.atn.ParserATNSimulator;
 import org.antlr.v4.runtime.atn.SemanticContext;
+import org.antlr.v4.runtime.misc.DFAEdgeCache;
 import org.antlr.v4.runtime.misc.MurmurHash;
 import org.antlr.v4.runtime.misc.SymbolMap;
 
@@ -54,7 +55,8 @@ public class DFAState {
 	 * Edges points to a target State for a symbol.
 	 * This map represents all edges from this state to all connected states.
  	 */
-	private final SymbolMap<DFAState> edges = new SymbolMap<>(2);
+	private final DFAEdgeCache edgeCache = new DFAEdgeCache(2);
+//	private final SymbolMap<DFAState> edges = new SymbolMap<>(2);
 
 	public boolean isAcceptState = false;
 
@@ -111,21 +113,19 @@ public class DFAState {
 	public DFAState(ATNConfigSet configs) { this.configs = configs; }
 
 	public void addEdge(int symbol, DFAState state) {
-		synchronized(this) {
-			edges.put(symbol, state);
-		}
+		edgeCache.addEdge(symbol, state);
 	}
 
 	public DFAState getTargetState(int symbol) {
-		return edges.get(symbol);
+		return edgeCache.getState(symbol);
 	}
 
 	public int[] getEdgeKeys() {
-		return edges.getKeys();
+		return edgeCache.getKeys();
 	}
 
 	public int getEdgeCount() {
-		return edges.size();
+		return edgeCache.size();
 	}
 
 	/** Get the set of all alts mentioned by all ATN configurations in this
