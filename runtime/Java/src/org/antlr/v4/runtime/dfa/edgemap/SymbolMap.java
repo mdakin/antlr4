@@ -3,18 +3,13 @@ package org.antlr.v4.runtime.dfa.edgemap;
 import java.util.Arrays;
 
 /**
- * A simple hashmap with integer keys and T values.
- * implements open address linear probing algorithm.
- * <p>
- * Constraints:
- * - Supports int key values in range (Integer.MIN_VALUE..Integer.MAX_VALUE];
- * - Does not implement Map interface
- * - Size can be max 1 << 29
- * - Does not support remove.
- * - Does not implement Iterable.
- * - Class is not thread safe.
+ * A simple map with int keys specifically designed for holding edges for a DFAState object
+ *
+ * This map is designed to be used by a thread safe caller class with Copy on Write semantics.
+ * If put operation fails (not enough space in the map for efficient gets), it just returns false
+ * it is callers responsibility to create a new Map with expanded size and replace the old one.
  */
-public final class SymbolMap<T> extends BaseEdgeMap<T> {
+final class SymbolMap<T> extends BaseEdgeMap<T> {
 
 	/**
 	 * Capacity of the map is expanded when size reaches to
@@ -26,18 +21,26 @@ public final class SymbolMap<T> extends BaseEdgeMap<T> {
 	private int threshold;
 
 	/**
-	 * @param capacity initial internal array size. It must be a positive
-	 * number. If value is not a power of two, size will be the nearest
-	 * larger power of two.
+	 * @param capacity initial internal array size. It must be a positive number. If value is not a
+	 * power of two, size will be the nearest larger power of two.
 	 */
 	@SuppressWarnings("unchecked")
-	public SymbolMap(int capacity) {
-		capacity = adjustCapacity(capacity) ;
+	SymbolMap(int capacity) {
+		capacity = adjustCapacity(capacity);
 		keys = new int[capacity];
 		values = (T[]) new Object[keys.length];
 		Arrays.fill(keys, EMPTY);
 		modulo = keys.length - 1;
 		threshold = (int) (capacity * LOAD_FACTOR);
+	}
+
+	SymbolMap(EdgeMap<T> inputMap) {
+		this(inputMap.size());
+		int[] keys = inputMap.getKeys();
+		T[] values = inputMap.getValues();
+		for (int i = 0; i < keys.length; i++) {
+			put(keys[i], values[i]);
+		}
 	}
 
 	public int capacity() {
@@ -73,15 +76,16 @@ public final class SymbolMap<T> extends BaseEdgeMap<T> {
 	}
 
 	/**
-	 * @return The value {@code T} taht is mapped to given {@code key}.
-	 * or  {@code null} If key does not exist.
-	 *
+	 * @return The value {@code T} taht is mapped to given {@code key}. or  {@code null} If key does
+	 * not exist.
 	 * @throws IllegalArgumentException if key is {@code Integer.MIN_INT}
 	 */
 	public T get(int key) {
 		checkKey(key);
 		int slot = key & modulo;
-		if (key == keys[slot]) return values[slot];
+		if (key == keys[slot]) {
+			return values[slot];
+		}
 		while (true) {
 			slot = (slot + 1) & modulo;
 			final int t = keys[slot];

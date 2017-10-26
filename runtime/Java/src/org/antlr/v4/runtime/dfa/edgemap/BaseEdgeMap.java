@@ -1,6 +1,7 @@
 package org.antlr.v4.runtime.dfa.edgemap;
 
 public abstract class BaseEdgeMap<T> implements EdgeMap<T> {
+
 	// Special value to mark empty cells.
 	static final int EMPTY = Integer.MIN_VALUE;
 

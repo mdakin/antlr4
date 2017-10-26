@@ -10,7 +10,7 @@ public class DFAEdgeCache {
 
 	// In Java volatile guarantees atomic reference copy.
 	// Initial map is the perfect map that expands in case of a collision.
-  // If it reaches to a certain size, it is replaced with normal int map that only grows
+	// If it reaches to a certain size, it is replaced with normal int map that only grows
 	// when its size reaches to a certain threshold. This map uses linear probing and
 	// expands only size reaches to a certain threshold, until capacity reaches to CAPACITY_LIMIT
 	// after that it throws.
@@ -29,16 +29,11 @@ public class DFAEdgeCache {
 	}
 
 	public synchronized void addEdge(int symbol, DFAState state) {
-		while(!edgeMap.put(symbol, state)) {
-  		EdgeMap<DFAState> newMap = edgeMap.expand();
+		while (!edgeMap.put(symbol, state)) {
+			EdgeMap<DFAState> newMap = edgeMap.expand();
 			// If we fail to insert even if we expand, we switch to use a (non perfect) hashmap.
 			if (edgeMap == newMap) {
-				newMap = new SymbolMap<>(edgeMap.size());
-				int[] keys = edgeMap.getKeys();
-				Object[] values = edgeMap.getValues();
-				for (int i=0; i<keys.length; i++) {
-					newMap.put(keys[i], (DFAState)values[i]);
-				}
+				newMap = new SymbolMap<>(edgeMap);
 			}
 			// Replace the map with new version.
 			edgeMap = newMap;
@@ -46,9 +41,9 @@ public class DFAEdgeCache {
 	}
 
 	public DFAState getState(int symbol) {
+		// Obtain a reference to current edge map, this read even if the edgeMap instance is changed
+		// by a writer thread we can still read a consistent version of the map.
 		EdgeMap<DFAState> map = edgeMap;
-		// Obtain a reference, after this even the edgeMap instance is changed by a writer thread,
-		// we don't care.
 		return map.get(symbol);
 	}
 
@@ -60,6 +55,8 @@ public class DFAEdgeCache {
 		return edgeMap.capacity();
 	}
 
-	public int[] getKeys() {return edgeMap.getKeys();}
+	public int[] getKeys() {
+		return edgeMap.getKeys();
+	}
 
 }
