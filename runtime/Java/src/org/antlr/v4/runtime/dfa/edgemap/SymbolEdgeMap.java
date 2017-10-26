@@ -34,13 +34,19 @@ final class SymbolEdgeMap<T> extends BaseEdgeMap<T> {
 		threshold = (int) (capacity * LOAD_FACTOR);
 	}
 
-	SymbolEdgeMap(EdgeMap<T> inputMap) {
-		this(inputMap.size());
+	static <T>SymbolEdgeMap fromMap(EdgeMap<T> inputMap) {
+		int newCapacity = inputMap.capacity();
+		while (newCapacity * LOAD_FACTOR <= inputMap.size()) {
+			newCapacity *= 2;
+		}
+		// We need to fit all elements from the input map. so expand until it fits.
 		int[] keys = inputMap.getKeys();
 		T[] values = inputMap.getValues();
+		SymbolEdgeMap<T> newMap = new SymbolEdgeMap<>(newCapacity);
 		for (int i = 0; i < keys.length; i++) {
-			put(keys[i], values[i]);
+			newMap.put(keys[i], values[i]);
 		}
+		return newMap;
 	}
 
 	public int capacity() {

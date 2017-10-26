@@ -25,7 +25,7 @@ public abstract class BaseEdgeMap<T> implements EdgeMap<T> {
 		if (initialCapacity < 1) {
 			throw new IllegalArgumentException("Capacity must be > 0: " + initialCapacity);
 		}
-		long k = 1;
+		long k = 2;
 		while (k < initialCapacity) {
 			k <<= 1;
 		}

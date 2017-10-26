@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Random;
 import org.antlr.v4.runtime.dfa.DFAState;
 import org.antlr.v4.runtime.dfa.edgemap.DFAEdgeCache;
-import org.antlr.v4.runtime.dfa.edgemap.DFAEdgeCache;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -78,7 +77,7 @@ public class TestDFAEdgeCache {
 		for (int[] arr : fuzzLists) {
 			DFAEdgeCache im = new DFAEdgeCache();
 			for (int i = 0; i < arr.length; i++) {
-				im.addEdge(arr[i], new DFAState(i));
+				im.addEdge(arr[i], new DFAState(arr[i]));
 				assertStateEquals(arr[i], im.getState(arr[i]));
 			}
 		}
@@ -86,7 +85,7 @@ public class TestDFAEdgeCache {
 		DFAEdgeCache im = new DFAEdgeCache();
 		for (int[] arr : fuzzLists) {
 			for (int i = 0; i < arr.length; i++) {
-				im.addEdge(arr[i], new DFAState(i));
+				im.addEdge(arr[i], new DFAState(arr[i]));
 				assertStateEquals(arr[i], im.getState(arr[i]));
 			}
 		}

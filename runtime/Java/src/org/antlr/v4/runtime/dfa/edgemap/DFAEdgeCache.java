@@ -3,6 +3,12 @@ package org.antlr.v4.runtime.dfa.edgemap;
 import org.antlr.v4.runtime.dfa.DFAState;
 
 /**
+ * Represents edges from a DFAState object to other DFAState objects.
+ *
+ * To provide thread safety it uses a copy on write scheme. Also to provide
+ * good performance for cases where edge keys are limited (Parser, Lexer with ascii only input) It
+ * uses a hashmap with no collisions, otherwise falls back to a simple hashmap with int keys.
+ *
  * Initial map is the perfect map that expands in case of a collision.
  * If it reaches to a certain size, it is replaced with normal int map that only grows
  * when its size reaches to a certain threshold. This map uses linear probing and
@@ -13,14 +19,11 @@ import org.antlr.v4.runtime.dfa.DFAState;
  * https://www.ibm.com/developerworks/java/library/j-jtp06197/index.html
  */
 public class DFAEdgeCache {
-
 	private static final int DEFAULT_INITIAL_CAPACITY = 2;
 
 	private static final int DEFAULT_MAX_CAPACITY = 1 << 7;
 
-	//
 	// In Java volatile guarantees atomic reference copy.
-	//
 	private volatile EdgeMap<DFAState> edgeMap;
 
 	public DFAEdgeCache() {
@@ -40,7 +43,7 @@ public class DFAEdgeCache {
 			EdgeMap<DFAState> newMap = edgeMap.expand();
 			// If we fail to insert even if we expand, we switch to use a (non perfect) hashmap.
 			if (edgeMap == newMap) {
-				newMap = new SymbolEdgeMap<>(edgeMap);
+					newMap = SymbolEdgeMap.fromMap(edgeMap);
 			}
 			// Replace the map with new version.
 			edgeMap = newMap;
