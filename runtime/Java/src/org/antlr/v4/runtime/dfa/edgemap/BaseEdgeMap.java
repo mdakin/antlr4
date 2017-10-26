@@ -21,16 +21,16 @@ public abstract class BaseEdgeMap<T> implements EdgeMap<T> {
 	// Number of keys in the map = size of the map.
 	int keyCount;
 
-	protected int adjustCapacity(int capacity) {
-		if (capacity < 1) {
-			throw new IllegalArgumentException("Capacity must be > 0: " + capacity);
+	protected int adjustInitialCapacity(int initialCapacity) {
+		if (initialCapacity < 1) {
+			throw new IllegalArgumentException("Capacity must be > 0: " + initialCapacity);
 		}
 		long k = 1;
-		while (k < capacity) {
+		while (k < initialCapacity) {
 			k <<= 1;
 		}
 		if (k > CAPACITY_LIMIT) {
-			throw new IllegalArgumentException("Size too large: " + capacity);
+			throw new IllegalArgumentException("Size too large: " + initialCapacity);
 		}
 		return (int) k;
 	}
@@ -50,7 +50,7 @@ public abstract class BaseEdgeMap<T> implements EdgeMap<T> {
 	}
 
 	/**
-	 * @return The array of keys in the map.
+	 * @return The array of values in the map (shares same order with getKeys).
 	 */
 	@SuppressWarnings("unchecked")
 	public T[] getValues() {

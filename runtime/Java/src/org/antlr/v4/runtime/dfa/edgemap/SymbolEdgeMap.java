@@ -9,7 +9,7 @@ import java.util.Arrays;
  * If put operation fails (not enough space in the map for efficient gets), it just returns false
  * it is callers responsibility to create a new Map with expanded size and replace the old one.
  */
-final class SymbolMap<T> extends BaseEdgeMap<T> {
+final class SymbolEdgeMap<T> extends BaseEdgeMap<T> {
 
 	/**
 	 * Capacity of the map is expanded when size reaches to
@@ -25,8 +25,8 @@ final class SymbolMap<T> extends BaseEdgeMap<T> {
 	 * power of two, size will be the nearest larger power of two.
 	 */
 	@SuppressWarnings("unchecked")
-	SymbolMap(int capacity) {
-		capacity = adjustCapacity(capacity);
+	SymbolEdgeMap(int capacity) {
+		capacity = adjustInitialCapacity(capacity);
 		keys = new int[capacity];
 		values = (T[]) new Object[keys.length];
 		Arrays.fill(keys, EMPTY);
@@ -34,7 +34,7 @@ final class SymbolMap<T> extends BaseEdgeMap<T> {
 		threshold = (int) (capacity * LOAD_FACTOR);
 	}
 
-	SymbolMap(EdgeMap<T> inputMap) {
+	SymbolEdgeMap(EdgeMap<T> inputMap) {
 		this(inputMap.size());
 		int[] keys = inputMap.getKeys();
 		T[] values = inputMap.getValues();
@@ -76,7 +76,7 @@ final class SymbolMap<T> extends BaseEdgeMap<T> {
 	}
 
 	/**
-	 * @return The value {@code T} taht is mapped to given {@code key}. or  {@code null} If key does
+	 * @return The value {@code T} that is mapped to given {@code key}. or {@code null} If key does
 	 * not exist.
 	 * @throws IllegalArgumentException if key is {@code Integer.MIN_INT}
 	 */
@@ -130,7 +130,7 @@ final class SymbolMap<T> extends BaseEdgeMap<T> {
 	 */
 	public EdgeMap<T> expand() {
 		int capacity = newCapacity();
-		SymbolMap<T> newMap = new SymbolMap<>(capacity);
+		SymbolEdgeMap<T> newMap = new SymbolEdgeMap<>(capacity);
 		for (int i = 0; i < keys.length; i++) {
 			if (keys[i] != EMPTY) {
 				newMap.put(keys[i], values[i]);

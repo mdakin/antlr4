@@ -3,23 +3,29 @@ package org.antlr.v4.runtime.dfa.edgemap;
 import java.util.Arrays;
 
 /**
- * A small map with int keys. Properties:
- * - get is always a single lookup.
- * - put may fail.
- * - Is not thread safe
+ * A small map that guarantees single lookups for get operations (no collisions). put operation
+ * fails if it encounters a collision, the caller side is then may call expand method to create
+ * a new map with no collisions, expand may also fail to create a collision free map. It is
+ * callers responsibility to switch to a new map type.
+ *
+ * For an input key space [0..n] This map only grows up to 2^x capacity that is bigger than n, which
+ * makes it basically a lookup table if keys are always small (e.g. all are ascii characters or
+ * all are token ids). It generally uses less memory than a sparse lookup table if size of map is
+ * small.
+ *
+ * This map is not thread safe and designed to be managed by a thread safe caller class.
  */
 final class PerfectEdgeMap<T> extends BaseEdgeMap<T> {
 
 	private int maxCapacity;
-
 	/**
-	 * @param capacity initial internal array size. It must be a positive number. If value is not a
+	 * @param capacity initial internal array capacity. It must be a positive number. If value is not a
 	 * power of two, size will be the nearest larger power of two.
 	 */
 	@SuppressWarnings("unchecked")
 	PerfectEdgeMap(int capacity, int maxCapacity) {
-		capacity = adjustCapacity(capacity);
-		this.maxCapacity = adjustCapacity(maxCapacity);
+		capacity = adjustInitialCapacity(capacity);
+		this.maxCapacity = adjustInitialCapacity(maxCapacity);
 		keys = new int[capacity];
 		values = (T[]) new Object[keys.length];
 		Arrays.fill(keys, EMPTY);
@@ -59,11 +65,6 @@ final class PerfectEdgeMap<T> extends BaseEdgeMap<T> {
 		return false;
 	}
 
-	/**
-	 * @return The value {@code T} taht is mapped to given {@code key}. or  {@code null} If key does
-	 * not exist.
-	 * @throws IllegalArgumentException if key is {@code Integer.MIN_INT}
-	 */
 	public T get(int key) {
 		checkKey(key);
 		final int loc = key & modulo;
@@ -75,7 +76,8 @@ final class PerfectEdgeMap<T> extends BaseEdgeMap<T> {
 	}
 
 	/**
-	 * Try to create a new map with double capacity.
+	 * Tries to create a new map with double capacity. If it fails to create a new expanded map
+	 * (in case it can not create a map with no collisions) it returns this.
 	 */
 	public EdgeMap<T> expand() {
 		PerfectEdgeMap<T> newMap = this;
