@@ -1,6 +1,6 @@
-package org.antlr.v4.runtime.misc;
+package org.antlr.v4.runtime.dfa.edgemap;
 
-public interface EdgeCache<T> {
+public interface EdgeMap<T> {
 
 	boolean put(int key, T value);
 
@@ -14,5 +14,5 @@ public interface EdgeCache<T> {
 
 	T[] getValues();
 
-	EdgeCache<T> expand();
+	EdgeMap<T> expand();
 }

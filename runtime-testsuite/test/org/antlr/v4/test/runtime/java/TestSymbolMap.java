@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import org.antlr.v4.runtime.misc.SymbolMap;
+import org.antlr.v4.runtime.dfa.edgemap.SymbolMap;
 import org.junit.Assert;
 import org.junit.Test;
 

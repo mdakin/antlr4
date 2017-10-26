@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Random;
-import org.antlr.v4.runtime.misc.DFAEdgeCache;
+import org.antlr.v4.runtime.dfa.edgemap.DFAEdgeCache;
 import org.junit.Assert;
 import org.junit.Test;
 
